@@ -25,12 +25,6 @@ export default {
     margin-bottom: 3em;
   }
 
-  #footer .icon {
-    height: 23px;
-    display: inline-block;
-    margin-bottom: -6px;
-  }
-
   .hr {
     border-bottom: 1px solid #dbdbdb;
     margin: 3em 0;
