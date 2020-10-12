@@ -1,6 +1,6 @@
 <template>
     <div>
-        <navbar/>
+        <navbar v-bind:loggedin="this.loggedin" v-bind:username="this.username" page="main"/>
 
         <!-- Apresentation Section -->
 
@@ -73,16 +73,13 @@
             </b-container>
             <b-row>
                 <b-col cols="4" data-aos="zoom-in" data-aos-duration="1000">
-                    <b-card
-                        title="Free"
-                        style="max-width: 100%;"
-                        class="mb-4"
-                    >
+                    <b-card title="Free" style="max-width: 100%;" class="mb-4">
                         <b-card-text>
                             <h3>0€ - Lifetime</h3>
 
                             <ul style="list-style-type:none;">
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Store Projects to Community</li>
+                                <li><b-icon icon="check2" aria-hidden="true"></b-icon> Can create up to 5 projects</li>
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Community Access</li>
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Total Website Customization</li>
                                 <li class="na"><b-icon icon="x" aria-hidden="true"></b-icon> Save projects as private</li>
@@ -95,16 +92,13 @@
                     </b-card>
                 </b-col>
                 <b-col cols="4" data-aos="zoom-in" data-aos-duration="1000">
-                    <b-card
-                        title="Default"
-                        style="max-width: 100%;"
-                        class="mb-4"
-                    >
+                    <b-card title="Plus" style="max-width: 100%;" class="mb-4">
                         <b-card-text>
-                            <h3>7€ - Lifetime</h3>
+                            <h3>5€ - Lifetime</h3>
 
                             <ul style="list-style-type:none;">
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Store Projects to Community</li>
+                                <li><b-icon icon="check2" aria-hidden="true"></b-icon> Can create up to 15 projects</li>
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Community Access</li>
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Total Website Customization</li>
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Save projects as private</li>
@@ -117,16 +111,13 @@
                     </b-card>
                 </b-col>
                 <b-col cols="4" data-aos="zoom-in" data-aos-duration="1000">
-                    <b-card
-                        title="Plus"
-                        style="max-width: 100%;"
-                        class="mb-4"
-                    >
+                    <b-card title="Pro" style="max-width: 100%;" class="mb-4">
                         <b-card-text>
                             <h3>15€ - Lifetime</h3>
 
                             <ul style="list-style-type:none;">
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Store Projects to Community</li>
+                                <li><b-icon icon="check2" aria-hidden="true"></b-icon> Can create unlimited projects</li>
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Community Access</li>
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Total Website Customization</li>
                                 <li><b-icon icon="check2" aria-hidden="true"></b-icon> Save projects as private</li>
@@ -140,16 +131,14 @@
                 </b-col>
             </b-row>
         </section>
-
         <foot/>
     </div>
-    
 </template>
-
 <script>
 
 import navbar from './navbar.vue'
 import foot from './footer.vue'
+import axios from 'axios'
 
 export default {
     data() {
@@ -157,10 +146,37 @@ export default {
         }
     },
     components: {
-        
         navbar,
         foot
+    },
+    props: {
+        'username': String, 
+        'loggedin': Boolean
+        },
+    methods: {},
+    beforeCreate(){
+        let server_ip = window.location.protocol + "//" + window.location.hostname;
+        axios.get(server_ip + ":3000/api/check_session")
+        .then(response => {
 
+            if(response.data.status == "success") {
+
+                // Session Found
+                this.loggedin = true;
+                this.username = response.data.username;
+
+            } else if (response.data.status == "fail") {
+
+                // No Session Found
+                this.loggedin = false;
+
+            } else {
+
+                // Error
+                this.loggedin = false;
+                
+            }
+        })    
     }
 }
 </script>

@@ -20,6 +20,7 @@ export default {
     background-color: #213C53 !important;
     padding-left: 15%;
     padding-right: 15%;
+    transition: all .5s;
   }
 
 </style>

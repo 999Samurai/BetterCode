@@ -1,38 +1,33 @@
 <template>
   <header>
     <b-navbar toggleable="lg" type="dark" class="navbar-horizontal" id="navbar">
-      <b-navbar-brand href="#">BetterCode</b-navbar-brand>
+      <b-navbar-brand href="/">BetterCode</b-navbar-brand>
 
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
       <b-collapse id="nav-collapse" is-nav>
-        <b-navbar-nav class="ml-auto" v-if="loggedin == true">
+        <b-navbar-nav class="ml-auto" v-if="loggedin == false && page != 'login' && page != 'register'">
             <b-nav-item href="#" id="text">
                   <span class="nav-link-inner--text">Discover</span>
             </b-nav-item>
-            <b-nav-item href="#">
+            <b-nav-item href="/login">
               <b-button variant="primary" size="md" class="mb-2">
                 <b-icon icon="person-fill" aria-hidden="true"></b-icon>Login  
               </b-button>
             </b-nav-item>
-            <b-nav-item href="#">
+            <b-nav-item href="/register">
               <b-button variant="outline-primary" size="md" class="mb-2">
                 <b-icon icon="person" aria-hidden="true"></b-icon> Register  
               </b-button>
             </b-nav-item>
         </b-navbar-nav>
-        <b-navbar-nav class="ml-auto" v-else-if="loggedin == false">
+        <b-navbar-nav class="ml-auto" v-else-if="loggedin == true && page != 'login' && page != 'register'">
             <b-nav-item href="#" id="text">
               <span class="nav-link-inner--text">Discover</span>
             </b-nav-item>
             <b-nav-item href="#">
               <b-button variant="primary" size="md" class="mb-2">
-                <b-icon icon="person-fill" aria-hidden="true"></b-icon>Login  
-              </b-button>
-            </b-nav-item>
-            <b-nav-item href="#">
-              <b-button variant="outline-primary" size="md" class="mb-2">
-                <b-icon icon="person" aria-hidden="true"></b-icon> Register  
+                <b-icon icon="person-fill" aria-hidden="true"></b-icon>{{ username }}  
               </b-button>
             </b-nav-item>
         </b-navbar-nav>
@@ -49,7 +44,9 @@ export default {
     }
   }, 
   props: {
-    loggedin: Boolean
+    loggedin: Boolean,
+    username: String,
+    page: String
   }
 }
 </script>

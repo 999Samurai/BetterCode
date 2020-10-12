@@ -5,6 +5,8 @@ import VueRouter from 'vue-router'
 
 import App from './App.vue'
 import mainpage from './components/mainpage.vue'
+import register from './components/register.vue'
+import login from './components/login.vue'
 
 import 'aos/dist/aos.css'
 import 'bootstrap/dist/css/bootstrap.css'
@@ -17,7 +19,9 @@ Vue.use(VueRouter)
 AOS.init()
 
 const routes = [
-  { path: "/", component: mainpage}
+  { path: "/", component: mainpage},
+  { path: "/register", component: register},
+  { path: "/login", component: login}
 ]
 
 const router = new VueRouter({
