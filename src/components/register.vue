@@ -2,7 +2,8 @@
     <div class="body">
 
         <navbar page="register"/>
-
+        <b-alert show variant="warning" v-if="this.status == 'fail'" align="center">{{ this.message }}</b-alert>
+        <b-alert show variant="success" v-if="this.status == 'success'" align="center">{{ this.message }}</b-alert>
         <div class="form-div">
             <div class="rgstr-btn splits">
                 <p>Already registered?</p>
@@ -13,36 +14,36 @@
                 <button class="active" onclick="window.location.href='/login'">Login</button>
             </div>
             <div class="wrapper">
-                <form id="login" tabindex="500">
+                <form v-on:submit.prevent id="login" tabindex="500">
                     <h3>Register</h3>
                     <div class="first_name" style="float: left; width: 50%;">
-                        <input type="text" name="" required>
+                        <input type="text" id="first_name" required>
                         <label>First Name</label>
                     </div>
                     <div class="last_name" style="float: right; width: 50%; padding-left: 5px">
-                        <input type="text" name="" required>
+                        <input type="text" id="last_name" required>
                         <label>Last Name</label>
                     </div>
                     <div class="mail" style="clear: both;">
-                        <input type="email" name="" required>
+                        <input type="email" id="email" required>
                         <label>Email</label>
                     </div>
                     <div class="uid">
-                        <input type="text" name="" required>
+                        <input type="text" id="username" required>
                         <label>Username</label>
                     </div>
                     <div class="passwd" style="float: left; width: 50%">
-                        <input type="password" name="" required>
+                        <input type="password" id="password" required>
                         <label>Password</label>
                     </div>
                     <div class="passwd" style="float: right; width: 50%; padding-left: 5px">
-                        <input type="password" name="" required>
+                        <input type="password" id="confirm_password" required>
                         <label>Confirm password</label>
                     </div>
+                    <div class="g-recaptcha" id="recaptcha" style="clear: both;" data-sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad"></div>
                     <div class="submit" style="clear: both;">
-                        <button class="dark">Register</button>
+                        <button class="dark" v-on:click="register()" :hidden="disable">Register</button>
                     </div>
-
                 </form>
             </div>
         </div>	
@@ -57,12 +58,55 @@ import axios from 'axios'
 export default {
     name: "register", 
     data(){
-        return {}
+        return {
+            disable: false
+        }
     },
     components: {
         navbar
     },
-    methods: {},
+    props: {
+
+        status: String,
+        message: String
+
+    },
+    methods: {
+        register: function() {
+
+            this.disable = true;            
+
+            let server_ip = window.location.protocol + "//" + window.location.hostname;
+
+            axios.post(server_ip + ":3000/api/register", {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                email: document.getElementById('email').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                recaptcha: document.getElementById('recaptcha').value || "oi"
+            }).then(response => {
+
+                if(response.data.status == "fail") {
+        
+                    this.disable = false;
+
+                } else if (response.data.status == "success") {
+
+                    this.disable = true;
+
+                } else {
+                    
+                    this.disable = false;
+
+                }
+
+                this.status = response.data.status;
+                this.message = response.data.message;
+
+            })
+        }
+    },
     beforeCreate(){
         let server_ip = window.location.protocol + "//" + window.location.hostname;
         axios.get(server_ip + ":3000/api/check_session")
@@ -98,7 +142,7 @@ export default {
         padding: 1px;
 
         width: 100%;
-        margin: 100px auto;
+        margin: 75px auto;
         background: rgba(255,255,255,.5);
         min-height: 400px;
         display: table;
@@ -173,7 +217,7 @@ export default {
     }
 
     .form-div .wrapper #login{
-        padding-top: 20%;
+        padding-top: 5%;
         visibility: visible;
     }
 
