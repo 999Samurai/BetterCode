@@ -1,4 +1,5 @@
-const password_hash = require('password-hash');
+const bcrypt = require('bcrypt');
+const fetch = require('isomorphic-fetch');
 
 class User {
 
@@ -32,23 +33,48 @@ class User {
         });
     }
 
-    check_login(email, password) {
+    check_login(email) {
         return new Promise((resolve, reject) => {
-            let user_password = this.generate_hash(password);
-            this.con.query('SELECT * FROM users WHERE email = ? AND password = ? AND is_github = 0;', [email, user_password], function (error, results) {
+            this.con.query('SELECT * FROM users WHERE email = ? AND is_github = 0;', [email], function (error, results) {
                 if(!error){
                     return resolve(results[0]);
                 } else {
-                    return;
+                    return resolve(error);
                 }
-              }
-            );
+            });
         });
     }
 
     generate_hash(password) {
         return new Promise((resolve, reject) => {
-            return resolve(password_hash.generate(password));
+
+            bcrypt.genSalt(10, function(err, salt) {
+                bcrypt.hash(password, salt, function(err, hash) {
+                    return resolve(hash);
+                });
+            });
+
+        });
+    }
+
+    verify_password(password, hash) {
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, hash, function(err, result) {
+                return resolve(result);
+            });
+        })
+    }
+
+    check_captcha(token) {
+        return new Promise((resolve, reject) => {
+            fetch(`https://www.google.com/recaptcha/api/siteverify?secret=6LfGC9gZAAAAAIbvNguNArdKUUDx3XEnbxE2O8ww&response=${token}`, 
+                { method: "POST"}).then(response => response.json()).then(function(google_response) {
+                if(google_response["success"] == true) {
+                    return resolve(true);
+                } else {
+                    return resolve(false);
+                }
+            });
         });
     }
     

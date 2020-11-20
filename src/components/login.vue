@@ -3,7 +3,9 @@
     <div class="body">
  
         <navbar page="login"/>
-
+        <b-alert show variant="warning" v-if="this.status == 'fail'" align="center">{{ this.message }}</b-alert>
+        <b-alert show variant="success" v-if="this.status == 'success'" align="center">{{ this.message }}</b-alert>
+        <b-alert show variant="empty" v-if="this.status == 'warning'" align="center">{{ this.message }}</b-alert>
         <div class="veen">
             <div class="rgstr-btn splits">
                 <p>Don't have an account?</p>
@@ -14,21 +16,26 @@
                 <button class="active" id="btn" onclick="window.location.href='/register'">Register</button>
             </div>
             <div class="wrapper">
-                <form id="login" tabindex="500">
+                <form v-on:submit.prevent id="login" tabindex="500">
                     <h3>Login</h3>
                     <div class="mail">
-                        <input type="email" name="" required>
+                        <input type="email" name="email" id="email" required>
                         <label>Email</label>
                     </div>
                     <div class="passwd">
-                        <input type="password" name="" required>
+                        <input type="password" name="password" id="password" required>
                         <label>Password</label>
                     </div>
                     <a href=""><p style="text-align: left; font-size: 14px;">Forgot the password?</p></a>
+                    <vue-recaptcha
+                    ref="recaptcha"
+                    @verify="onCaptchaVerified"
+                    sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad">
+                    </vue-recaptcha>
                     <div class="submit">
-                        <button class="dark">Login</button>
+                        <button class="dark" v-on:click="login()">Login</button>
                     </div>
-                    <b-button variant="outline-dark" style="margin-top: 20px" onclick="window.location.href='https://github.com/login/oauth/authorize?scope=user:email&client_id=62598e2904fb3b2ab5ea'">
+                    <b-button variant="outline-dark" onclick="window.location.href='https://github.com/login/oauth/authorize?scope=user:email&client_id=62598e2904fb3b2ab5ea'">
                         Sign in with Github <i class="fa fa-github"></i>
                     </b-button>
                 </form>
@@ -41,7 +48,9 @@
 
 <script>
 
-import navbar from './navbar.vue'
+import navbar from './navbar.vue';
+import axios from 'axios';
+import VueRecaptcha from 'vue-recaptcha';
 
 export default {
     name: "login", 
@@ -49,7 +58,53 @@ export default {
         return {}
     },
     components: {
-        navbar
+        navbar,
+        VueRecaptcha
+    },
+    props: {
+
+        status: String,
+        message: String,
+        recaptcha_token: String
+
+    },
+    methods: {
+        login: function() {
+
+            let server_ip = window.location.protocol + "//" + window.location.hostname;
+
+            axios.post(server_ip + ":3000/api/login", {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                recaptcha: this.recaptcha_token || null
+            }).then(response => {
+
+                if(response.data.status == "fail") {
+        
+                    this.disable = false;
+
+                } else if (response.data.status == "success") {
+
+                    this.disable = true;
+
+                } else if (response.data.status == "captcha") {
+
+                    location.reload();
+
+                } else {
+                    
+                    this.disable = false;
+
+                }
+
+                this.status = response.data.status;
+                this.message = response.data.message;
+
+            })
+        },
+        onCaptchaVerified: function (recaptchaToken) {
+            this.recaptcha_token = recaptchaToken;
+        }
     }
 }
 
@@ -150,7 +205,7 @@ export default {
     }
 
     .veen .wrapper #login{
-        padding-top: 20%;
+        padding-top: 5%;
         visibility: visible;
     }
 

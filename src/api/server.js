@@ -34,7 +34,7 @@ const port = 3000;
  *  Importing controllers
  */
 
-const User = require("./controllers/user.js")
+const User = require("./controllers/user.js");
 
  /*
   *  Creating sessions environment
@@ -60,7 +60,7 @@ app.use(bodyParser.urlencoded({
 
 app.get('/api/check_session', (req, res) => {
   if(req.session.username) {
-    res.send({status: "success", username: "${req.session.username}"});
+    res.send({status: "success", username: `${req.session.username}`});
   } else if (!req.session.username) {
     res.send({status: "fail", message: "Your session expired or never existed."})
   } else {
@@ -68,11 +68,42 @@ app.get('/api/check_session', (req, res) => {
   }
 })
 
-app.get("/api/login", (req, res) => {
+app.post("/api/login", async (req, res) => {
 
-  let username = req.body.username;
+  let email = req.body.email;
   let password = req.body.password;
-  let recaptcha_token = req.body.recaptcha_token;
+  let recaptcha_token = req.body.recaptcha;
+
+  if(email == "" || password == ""){
+    // Empty form
+    
+    res.send({status: "empty", message: "Some values of the form are empty."});
+    return;
+  }
+
+  let user = new User(connection);
+
+  let captcha_status = await user.check_captcha(recaptcha_token);
+  if(!captcha_status) {
+    // The captcha token is invalid.
+
+    res.send({status: "captcha", message: "The recaptcha token is invalid."});
+    return;
+  }
+
+  let get_results = await user.check_login(email);
+  if(get_results == undefined) {
+    // The email or password are wrong.
+
+    res.send({status: "fail", message: "The recaptcha token is invalid."});
+    return;
+  }
+
+  if(await user.verify_password(password, get_results.password)) {
+    console.log("TRUE");
+  } else {
+    console.log("FALSE");
+  }
 
 })
 
@@ -83,11 +114,12 @@ app.post("/api/register", async (req, res) => {
   let email = req.body.email;
   let username = req.body.username;
   let password = req.body.password;
-  
+  let recaptcha_token = req.body.recaptcha;
+
   if(first_name == "" || last_name == "" || email == "" || username == "" || password == ""){
     // Empty form
     
-    res.send({status: "empty", message: "Some value of the form is empty."});
+    res.send({status: "empty", message: "Some values of the form are empty."});
     return;
   }
 
@@ -106,6 +138,14 @@ app.post("/api/register", async (req, res) => {
     // Username is already in use.
 
     res.send({status: "fail", message: "The username that you inserted is already in use."});
+    return;
+  }
+
+  let captcha_status = await user.check_captcha(recaptcha_token);
+  if(!captcha_status) {
+    // The captcha token is invalid.
+
+    res.send({status: "fail", message: "The captcha token invalid."});
     return;
   }
 

@@ -4,6 +4,7 @@
         <navbar page="register"/>
         <b-alert show variant="warning" v-if="this.status == 'fail'" align="center">{{ this.message }}</b-alert>
         <b-alert show variant="success" v-if="this.status == 'success'" align="center">{{ this.message }}</b-alert>
+        <b-alert show variant="empty" v-if="this.status == 'warning'" align="center">{{ this.message }}</b-alert>
         <div class="form-div">
             <div class="rgstr-btn splits">
                 <p>Already registered?</p>
@@ -40,8 +41,13 @@
                         <input type="password" id="confirm_password" required>
                         <label>Confirm password</label>
                     </div>
-                    <div class="g-recaptcha" id="recaptcha" style="clear: both;" data-sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad"></div>
-                    <div class="submit" style="clear: both;">
+                    <div style="clear: both;"></div>
+                    <vue-recaptcha
+                    ref="recaptcha"
+                    @verify="onCaptchaVerified"
+                    sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad">
+                    </vue-recaptcha>
+                    <div class="submit">
                         <button class="dark" v-on:click="register()" :hidden="disable">Register</button>
                     </div>
                 </form>
@@ -52,8 +58,9 @@
 
 <script>
 
-import navbar from './navbar.vue'
-import axios from 'axios'
+import navbar from './navbar.vue';
+import axios from 'axios';
+import VueRecaptcha from 'vue-recaptcha';
 
 export default {
     name: "register", 
@@ -63,12 +70,14 @@ export default {
         }
     },
     components: {
-        navbar
+        navbar,
+        VueRecaptcha
     },
     props: {
 
         status: String,
-        message: String
+        message: String,
+        recaptcha_token: String
 
     },
     methods: {
@@ -84,7 +93,7 @@ export default {
                 email: document.getElementById('email').value,
                 username: document.getElementById('username').value,
                 password: document.getElementById('password').value,
-                recaptcha: document.getElementById('recaptcha').value || "oi"
+                recaptcha: this.recaptcha_token || null
             }).then(response => {
 
                 if(response.data.status == "fail") {
@@ -105,6 +114,9 @@ export default {
                 this.message = response.data.message;
 
             })
+        },
+        onCaptchaVerified: function (recaptchaToken) {
+            this.recaptcha_token = recaptchaToken;
         }
     },
     beforeCreate(){
