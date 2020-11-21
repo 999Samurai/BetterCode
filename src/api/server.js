@@ -100,10 +100,17 @@ app.post("/api/login", async (req, res) => {
   }
 
   if(await user.verify_password(password, get_results.password)) {
-    console.log("TRUE");
-  } else {
-    console.log("FALSE");
-  }
+      // Success.
+
+      res.send({status: "success", first_name: get_results.first_name, last_name: get_results.last_name, email: get_results.email, creation_date: get_results.creation_date, last_login: get_results.last_login});
+      return;
+    } else {
+
+      // The email or password are wrong.
+
+      res.send({status: "fail", message: "Incorrect email or password."});
+      return;  
+    }
 
 })
 
