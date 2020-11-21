@@ -2,7 +2,6 @@ import Vue from 'vue'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import AOS from 'aos'
 import VueRouter from 'vue-router'
-import Vuex from 'vuex'
 
 import App from './App.vue'
 import mainpage from './components/mainpage.vue'
@@ -17,7 +16,6 @@ Vue.config.productionTip = false
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 Vue.use(VueRouter)
-Vue.use(Vuex)
 AOS.init()
 
 const routes = [
@@ -31,11 +29,6 @@ const router = new VueRouter({
   mode: 'history'
 })
 
-new Vuex.Store({
-  state: {
-    isLoggedIn: !!localStorage.getItem()
-  }
-});
 
 new Vue({
   render: h => h(App),
