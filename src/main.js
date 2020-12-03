@@ -1,12 +1,21 @@
 import Vue from 'vue'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import AOS from 'aos'
-import VueRouter from 'vue-router'
+import VeeValidate from 'vee-validate';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {
+  faHome,
+  faUser,
+  faUserPlus,
+  faSignInAlt,
+  faSignOutAlt
+} from '@fortawesome/free-solid-svg-icons';
 
 import App from './App.vue'
-import mainpage from './components/mainpage.vue'
-import register from './components/register.vue'
-import login from './components/login.vue'
+
+import { router } from './router';
+import store from './store';
 
 import 'aos/dist/aos.css'
 import 'bootstrap/dist/css/bootstrap.css'
@@ -15,22 +24,14 @@ import 'bootstrap-vue/dist/bootstrap-vue.css'
 Vue.config.productionTip = false
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
-Vue.use(VueRouter)
+Vue.use(VeeValidate);
+Vue.component('font-awesome-icon', FontAwesomeIcon);
 AOS.init()
 
-const routes = [
-  { path: "/", component: mainpage},
-  { path: "/register", component: register},
-  { path: "/login", component: login}
-]
-
-const router = new VueRouter({
-  routes: routes,
-  mode: 'history'
-})
-
+library.add(faHome, faUser, faUserPlus, faSignInAlt, faSignOutAlt);
 
 new Vue({
-  render: h => h(App),
-  router
-}).$mount('#app')
+  router,
+  store,
+  render: h => h(App)
+}).$mount('#app');

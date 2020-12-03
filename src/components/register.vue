@@ -2,6 +2,9 @@
     <div class="body">
 
         <navbar page="register"/>
+
+        <br>
+        
         <b-alert show variant="warning" v-if="this.status == 'fail'" align="center">{{ this.message }}</b-alert>
         <b-alert show variant="success" v-if="this.status == 'success'" align="center">{{ this.message }}</b-alert>
         <b-alert show variant="empty" v-if="this.status == 'warning'" align="center">{{ this.message }}</b-alert>
@@ -48,7 +51,7 @@
                     sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad">
                     </vue-recaptcha>
                     <div class="submit">
-                        <button class="dark" v-on:click="register()" :hidden="disable">Register</button>
+                        <button class="dark" v-on:click="register()">Register</button>
                     </div>
                 </form>
             </div>
@@ -88,27 +91,15 @@ export default {
             let server_ip = window.location.protocol + "//" + window.location.hostname;
 
             axios.post(server_ip + ":3000/api/register", {
+                
                 first_name: document.getElementById('first_name').value,
                 last_name: document.getElementById('last_name').value,
                 email: document.getElementById('email').value,
                 username: document.getElementById('username').value,
                 password: document.getElementById('password').value,
                 recaptcha: this.recaptcha_token || null
+
             }).then(response => {
-
-                if(response.data.status == "fail") {
-        
-                    this.disable = false;
-
-                } else if (response.data.status == "success") {
-
-                    this.disable = true;
-
-                } else {
-                    
-                    this.disable = false;
-
-                }
 
                 this.status = response.data.status;
                 this.message = response.data.message;

@@ -3,9 +3,15 @@
     <div class="body">
  
         <navbar page="login"/>
-        <b-alert show variant="warning" v-if="this.status == 'fail'" align="center">{{ this.message }}</b-alert>
-        <b-alert show variant="success" v-if="this.status == 'success'" align="center">{{ this.message }}</b-alert>
-        <b-alert show variant="empty" v-if="this.status == 'warning'" align="center">{{ this.message }}</b-alert>
+
+        <br>
+
+        <b-alert show dismissible variant="danger" v-if="errors.has('password')" align="center">Password is required</b-alert>
+        <b-alert show dismissible variant="danger" v-if="errors.has('email')" align="center">Email is required</b-alert>
+
+
+        <b-alert show dismissible variant="danger" v-if="message" align="center">{{ message }}</b-alert>
+
         <div class="veen">
             <div class="rgstr-btn splits">
                 <p>Don't have an account?</p>
@@ -16,14 +22,26 @@
                 <button class="active" id="btn" onclick="window.location.href='/register'">Register</button>
             </div>
             <div class="wrapper">
-                <form v-on:submit.prevent id="login" tabindex="500">
+                <form @submit.prevent="handleLogin" id="login" tabindex="500">
                     <h3>Login</h3>
                     <div class="mail">
-                        <input type="email" name="email" id="email" required>
+                        <input
+                            v-model="user.email"
+                            v-validate="'required'"
+                            type="email"
+                            class="form-control"
+                            name="email"
+                        />
                         <label>Email</label>
                     </div>
                     <div class="passwd">
-                        <input type="password" name="password" id="password" required>
+                        <input
+                            v-model="user.password"
+                            v-validate="'required'"
+                            type="password"
+                            class="form-control"
+                            name="password"
+                        />
                         <label>Password</label>
                     </div>
                     <a href=""><p style="text-align: left; font-size: 14px;">Forgot the password?</p></a>
@@ -33,7 +51,8 @@
                     sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad">
                     </vue-recaptcha>
                     <div class="submit">
-                        <button class="dark" v-on:click="login()">Login</button>
+                        <span v-show="loading" class="spinner-border spinner-border-sm"></span>
+                        <button class="dark" :disabled="loading">Login</button>
                     </div>
                     <b-button variant="outline-dark" onclick="window.location.href='https://github.com/login/oauth/authorize?scope=user:email&client_id=62598e2904fb3b2ab5ea'">
                         Sign in with Github <i class="fa fa-github"></i>
@@ -49,61 +68,60 @@
 <script>
 
 import navbar from './navbar.vue';
-import axios from 'axios';
 import VueRecaptcha from 'vue-recaptcha';
+import User from '../models/user';
 
 export default {
     name: "login", 
     data(){
-        return {}
+        return {
+            user: new User('', '', ''),
+            loading: false,
+            status: '',
+            recaptcha_token: '',
+            message: ''
+        };
     },
     components: {
         navbar,
         VueRecaptcha
     },
-    props: {
-
-        status: String,
-        message: String,
-        recaptcha_token: String
-
+    computed: {
+        loggedIn() {
+            return this.$store.state.auth.status.loggedIn;
+        }
+    },
+    created() {
+        if (this.loggedIn) {
+            this.$router.push('/dashboard');
+        }
     },
     methods: {
-        login: function() {
+        handleLogin() {
+            try {
+                this.loading = true;
+                this.$validator.validateAll().then(isValid => {
+                    if (!isValid) {
+                        this.loading = false;
+                        return;
+                    }
 
-            let server_ip = window.location.protocol + "//" + window.location.hostname;
-
-            axios.post(server_ip + ":3000/api/login", {
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value,
-                recaptcha: this.recaptcha_token || null
-            }).then(response => {
-
-                if(response.data.status == "fail") {
-        
-                    this.disable = false;
-
-                } else if (response.data.status == "success") {
-
-                    this.disable = true;
-
-                } else if (response.data.status == "captcha") {
-
-                    location.reload();
-
-                } else {
-                    
-                    this.disable = false;
-
-                }
-
-                this.status = response.data.status;
-                this.message = response.data.message;
-
-            })
+                    if (this.user.email && this.user.password && this.user.recaptcha) {
+                    this.$store.dispatch('auth/login', this.user).then(() => {
+                        this.$router.push('/dashboard');
+                        },
+                        error => {
+                            this.loading = false;
+                            this.message = error.response || error.message || error.toString();
+                        }
+                    )}
+                });
+            } catch (err) {
+                console.log(err);
+            }
         },
         onCaptchaVerified: function (recaptchaToken) {
-            this.recaptcha_token = recaptchaToken;
+            this.user.recaptcha = recaptchaToken;
         }
     }
 }

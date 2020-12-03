@@ -2,6 +2,11 @@
     <div>
         <navbar v-bind:loggedin="this.loggedin" v-bind:username="this.username" page="main"/>
 
+        <br><br>
+
+        <b-alert show dismissible variant="success" v-if="this.status == 'email_verified'" align="center">The email has been verified. You can now Login.</b-alert>
+        <b-alert show dismissible variant="warning" v-if="this.status == 'error_email'" align="center">Failed to verify the email.</b-alert>
+
         <!-- Apresentation Section -->
 
         <section>
@@ -151,8 +156,9 @@ export default {
     },
     props: {
         'username': String, 
-        'loggedin': Boolean
-        },
+        'loggedin': Boolean,
+        'status': String
+    },
     methods: {},
     beforeCreate(){
         let server_ip = window.location.protocol + "//" + window.location.hostname;
@@ -177,6 +183,9 @@ export default {
                 
             }
         })    
+    },
+    mounted: function() {
+      this.status = this.$route.query.status;
     }
 }
 </script>

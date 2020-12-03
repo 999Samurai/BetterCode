@@ -5,19 +5,31 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const session = require('express-session')
 const mysql = require('mysql');
+const low = require('lowdb')
+var jwt = require('jsonwebtoken');
+require('dotenv-safe').config()
+
+const FileAsync = require('lowdb/adapters/FileAsync')
 
  /*
-  *  Librarys to generate a unique session id
+  *  Library to generate a unique id
   */
 
-const crypto = require('crypto');
 const uuid = require('node-uuid');
 
-/*
- *  Creating the connection to the database 
- */
+ /*
+  *  Creating Node Mailer connection
+  */
+
+const nodemailer = require('nodemailer');
+const transporter = nodemailer.createTransport({
+  service: 'gmail', auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+});
+
+ /*
+  *  Creating the connection to the database 
+  */
 
 var config = require("../../config/database");
 var connection = mysql.createConnection(config);
@@ -40,14 +52,6 @@ const User = require("./controllers/user.js");
   *  Creating sessions environment
   */
 
-app.use(session({
-  secret: 'BetterCode_Secret', 
-  cookie: { maxAge: 60000 },
-  genid: function(req){
-    return crypto.createHash('sha256').update(uuid.v1()).update(crypto.randomBytes(256)).digest("hex");
-  }
-}));
-
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -58,122 +62,163 @@ app.use(bodyParser.urlencoded({
   *  API Routes
   */
 
-app.get('/api/check_session', (req, res) => {
-  if(req.session.username) {
-    res.send({status: "success", username: `${req.session.username}`});
-  } else if (!req.session.username) {
-    res.send({status: "fail", message: "Your session expired or never existed."})
-  } else {
-    res.send({status: "error", message: "The request returned an error."})
-  }
-})
+const adapter = new FileAsync('database/confirmations.json')
+low(adapter).then(db => {
+  app.post("/api/login", async (req, res) => {
 
-app.post("/api/login", async (req, res) => {
+    let email = req.body.email;
+    let password = req.body.password;
+    let recaptcha_token = req.body.recaptcha;
 
-  let email = req.body.email;
-  let password = req.body.password;
-  let recaptcha_token = req.body.recaptcha;
+    if(email == "" || password == ""){
+      // Empty form
+      
+      return res.send({status: "empty", message: "Some values of the form are empty."});
+    }
 
-  if(email == "" || password == ""){
-    // Empty form
-    
-    res.send({status: "empty", message: "Some values of the form are empty."});
-    return;
-  }
+    let user = new User(connection, process.env.RECAPTCHA_SECRET);
 
-  let user = new User(connection);
+    let captcha_status = await user.check_captcha(recaptcha_token);
+    if(!captcha_status) {
+      // The captcha token is invalid.
 
-  let captcha_status = await user.check_captcha(recaptcha_token);
-  if(!captcha_status) {
-    // The captcha token is invalid.
+      return res.send({status: "captcha", message: "The recaptcha token is invalid."});
+    }
 
-    res.send({status: "captcha", message: "The recaptcha token is invalid."});
-    return;
-  }
-
-  let get_results = await user.check_login(email);
-  if(get_results == undefined) {
-    // The email or password are wrong.
-
-    res.send({status: "fail", message: "The recaptcha token is invalid."});
-    return;
-  }
-
-  if(await user.verify_password(password, get_results.password)) {
-      // Success.
-
-      res.send({status: "success", first_name: get_results.first_name, last_name: get_results.last_name, email: get_results.email, creation_date: get_results.creation_date, last_login: get_results.last_login});
-      return;
-    } else {
-
+    let get_results = await user.check_login(email);
+    if(get_results == undefined) {
       // The email or password are wrong.
 
-      res.send({status: "fail", message: "Incorrect email or password."});
-      return;  
+      return res.send({status: "fail", message: "Incorrect email or password."});
     }
 
-})
+    if(await user.verify_password(password, get_results.password)) {
+        // Success.
 
-app.post("/api/register", async (req, res) => {
+        if(get_results.email_verified) {
 
-  let first_name = req.body.first_name;
-  let last_name = req.body.last_name;
-  let email = req.body.email;
-  let username = req.body.username;
-  let password = req.body.password;
-  let recaptcha_token = req.body.recaptcha;
+          let user_id = get_results.id;
+          let user_email = get_results.email;
+          let user_name = get_results.username;
 
-  if(first_name == "" || last_name == "" || email == "" || username == "" || password == ""){
-    // Empty form
-    
-    res.send({status: "empty", message: "Some values of the form are empty."});
-    return;
-  }
+          var token = jwt.sign({ user_id, user_email, user_name }, process.env.SECRET, {
+            expiresIn: 43200 // expires in 12 hours
+          });
+          return res.send({status: "success", user: { auth: token, user_id: user_id, user_email: user_email, username: user_name }});
+        } else {
+          return res.send({status: "fail", message: "Please verify your email first."});
+        }
 
-  let user = new User(connection);
+      } else {
 
-  let email_status = await user.check_email(email);
-  if(email_status) {
-    // Email is already in use.
+        // The email or password are wrong.
 
-    res.send({status: "fail", message: "The email that you inserted is already in use."});
-    return;
-  }
+        return res.send({status: "fail", message: "Incorrect email or password."});
+      }
 
-  let username_status = await user.check_user(username);
-  if(username_status) {
-    // Username is already in use.
+  })
 
-    res.send({status: "fail", message: "The username that you inserted is already in use."});
-    return;
-  }
+  app.post("/api/register", async (req, res) => {
 
-  let captcha_status = await user.check_captcha(recaptcha_token);
-  if(!captcha_status) {
-    // The captcha token is invalid.
+    let first_name = req.body.first_name;
+    let last_name = req.body.last_name;
+    let email = req.body.email;
+    let username = req.body.username;
+    let password = req.body.password;
+    let recaptcha_token = req.body.recaptcha;
 
-    res.send({status: "fail", message: "The captcha token invalid."});
-    return;
-  }
+    if(first_name == "" || last_name == "" || email == "" || username == "" || password == ""){
+      // Empty form
+      
+      return res.send({status: "empty", message: "Some values of the form are empty."});
+    }
 
-  let hashed_password = await user.generate_hash(password);
+    let user = new User(connection, process.env.RECAPTCHA_SECRET);
 
-  connection.query("INSERT INTO users (first_name, last_name, username, email, password) VALUES (?, ?, ?, ?, ?);", [first_name, last_name, username, email, hashed_password], (err, rows) => {
-    if(err) {
-      if(err) console.log(err);
-      res.send({status: "fail", message: "An unexpected error occurred, try again later."})
+    let captcha_status = await user.check_captcha(recaptcha_token);
+    if(!captcha_status) {
+      // The captcha token is invalid.
+
+      return res.send({status: "fail", message: "The captcha token invalid."});
+    }
+
+    let email_status = await user.check_email(email);
+    if(email_status) {
+      // Email is already in use.
+
+      return res.send({status: "fail", message: "The email that you inserted is already in use."});
+    }
+
+    let username_status = await user.check_user(username);
+    if(username_status) {
+      // Username is already in use.
+
+      return res.send({status: "fail", message: "The username that you inserted is already in use."});
+    }
+
+    let hashed_password = await user.generate_hash(password);
+
+    connection.query("INSERT INTO users (first_name, last_name, username, email, password) VALUES (?, ?, ?, ?, ?);", [first_name, last_name, username, email, hashed_password], (err, rows) => {
+      if(err) {
+        if(err) console.log(err);
+        res.send({status: "fail", message: "An unexpected error occurred, try again later."})
+      } else {
+
+        let generated_uuid = uuid.v4(); 
+
+        db.get('emails')
+        .push({ uuid: generated_uuid, email: email})
+        .last()
+        .write()
+
+        let text_email = user.generate_email_text(generated_uuid);
+
+        var mailOptions = {
+          from: '"BetterCode" <bettercode.noreply@gmail.com>',
+          to: email,
+          subject: 'Verify your account',
+          html: text_email
+        };
+
+        transporter.sendMail(mailOptions, function(error, info){
+          if (error) {
+
+            console.log(error);
+            return res.send({status: "error", message:"Error while sending the email confirmation."});
+
+          } else {
+
+            return res.send({status: "success", message:"We have sent you a email, please confirm your email."});
+
+          }
+        });
+      }
+    });
+  })
+
+  app.get("/api/verification/:uuid", (req, res) => {
+
+    let uuid = req.params.uuid;
+    let get_info = db.get("emails").find({ uuid: uuid }).value();
+
+    if(get_info != undefined) {
+      
+      let verified_email = get_info.email;
+      db.get("emails").remove({uuid: uuid}).write();
+
+      connection.query("UPDATE users SET email_verified = 1 WHERE email = ?", [verified_email], (err, rows) => {
+
+        if(!err) {
+          return res.redirect('http://localhost:8080?status=email_verified');
+        } else {
+          return res.redirect('http://localhost:8080?status=error_email');
+        }
+      })
     } else {
-      res.send({status: "success", message:"Account created with success, redirecting in 5 seconds."})
+      return res.redirect('http://localhost:8080?status=error_email');
     }
   });
-})
 
-app.get("/api/github/callback", (req, res) => {
-
-  console.log(req.query.code)
-
-})
-
-app.listen(port, () => {
-  console.log(`BetterCode API listening at http://localhost:${port}`)
+}).then(() => {
+  app.listen(3000, () => console.log('listening on port 3000'))
 })
