@@ -1,6 +1,6 @@
 <template>
     <div>
-        <navbar v-bind:loggedin="this.loggedin" v-bind:username="this.username" page="main"/>
+        <navbar v-bind:loggedin="loggedIn" v-bind:username="currentUser.username"/>
 
         <br><br>
 
@@ -143,7 +143,6 @@
 
 import navbar from './navbar.vue'
 import foot from './footer.vue'
-import axios from 'axios'
 
 export default {
     data() {
@@ -154,39 +153,25 @@ export default {
         navbar,
         foot
     },
+    computed: {
+        loggedIn() {
+            return this.$store.state.auth.status.loggedIn;
+        },
+        currentUser() {
+            if(this.$store.state.auth.status.loggedIn) {
+                return this.$store.state.auth.user;
+            } else {
+                return "";
+            }
+        }
+    },
     props: {
-        'username': String, 
-        'loggedin': Boolean,
         'status': String
     },
     methods: {},
-    beforeCreate(){
-        let server_ip = window.location.protocol + "//" + window.location.hostname;
-        axios.get(server_ip + ":3000/api/check_session")
-        .then(response => {
-
-            if(response.data.status == "success") {
-
-                // Session Found
-                this.loggedin = true;
-                this.username = response.data.username;
-
-            } else if (response.data.status == "fail") {
-
-                // No Session Found
-                this.loggedin = false;
-
-            } else {
-
-                // Error
-                this.loggedin = false;
-                
-            }
-        })    
-    },
     mounted: function() {
       this.status = this.$route.query.status;
-    }
+    },
 }
 </script>
 

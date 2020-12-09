@@ -69,7 +69,7 @@
 
 import navbar from './navbar.vue';
 import VueRecaptcha from 'vue-recaptcha';
-import User from '../models/user';
+import User from '../models/user_login';
 
 export default {
     name: "login", 
@@ -107,8 +107,14 @@ export default {
                     }
 
                     if (this.user.email && this.user.password && this.user.recaptcha) {
-                    this.$store.dispatch('auth/login', this.user).then(() => {
-                        this.$router.push('/dashboard');
+                        this.$store.dispatch('auth/login', this.user).then(() => {
+                            if(localStorage.getItem('user') != null) {
+                                this.$router.push('/dashboard');
+                            } else {
+                                this.loading = false;
+                                this.message = "Incorrect email or password.";
+                                window.grecaptcha.reset();
+                            }
                         },
                         error => {
                             this.loading = false;

@@ -10,32 +10,36 @@ export const auth = {
   state: initialState,
   actions: {
     login({ commit }, data) {
-      return AuthService.login(data).then(
-        response => {
+      return AuthService.login(data).then(response => {
+
+        if(response.auth) {
+
           commit('loginSuccess', response);
           return Promise.resolve(response);
-        },
-        error => {
+
+        } else {
+
           commit('loginFailure');
-          return Promise.reject(error);
+          return Promise.reject(response);
+
         }
-      );
+      });
     },
     logout({ commit }) {
       AuthService.logout();
       commit('logout');
     },
     register({ commit }, data) {
-      return AuthService.register(data).then(
-        response => {
+      return AuthService.register(data).then(response => {
+
+        if(response.data.status == "success") {
           commit('registerSuccess');
-          return Promise.resolve(response.data.status);
-        },
-        error => {
+          return Promise.resolve(response.data);
+        } else {
           commit('registerFailure');
-          return Promise.reject(error);
+          return Promise.reject(response.data);
         }
-      );
+      });
     }
   },
   mutations: {

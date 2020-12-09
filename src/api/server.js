@@ -47,6 +47,8 @@ const port = 3000;
  */
 
 const User = require("./controllers/user.js");
+const Auth = require("./controllers/auth.js");
+const _auth = new Auth();
 
  /*
   *  Creating sessions environment
@@ -218,6 +220,29 @@ low(adapter).then(db => {
       return res.redirect('http://localhost:8080?status=error_email');
     }
   });
+
+  app.get('/api/user/projects', _auth.verifyJWT, async (req, res, next) => {
+
+    let user = new User(connection, process.env.RECAPTCHA_SECRET);
+    let projects = await user.get_user_projects(req.userId);
+    if(projects) {
+      return res.status(200).send({auth: true, projects: projects});
+    } else {
+      return res.status(200).send({auth: true, error: true});
+    }
+  })
+
+  app.post('/api/user/create', _auth.verifyJWT, async (req, res, next) => {
+
+    let user = new User(connection, process.env.RECAPTCHA_SECRET);
+    let project = await user.create_user_project(req.userId, req.body.name);
+    if(project) {
+      let project_info = await user.get_project_info(project.insertId);
+      return res.status(200).send({auth: true, success: true, project: project_info});
+    } else {
+      return res.status(200).send({auth: true, success: false});
+    }
+  })
 
 }).then(() => {
   app.listen(3000, () => console.log('listening on port 3000'))

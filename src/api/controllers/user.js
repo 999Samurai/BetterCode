@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const fetch = require('isomorphic-fetch');
+const { user } = require('../../../config/database');
 
 class User {
 
@@ -14,7 +15,7 @@ class User {
                 if(!error){
                     return resolve(results[0].total > 0);
                 } else {
-                    return;
+                    return resolve(false);
                 }
               }
             );
@@ -27,7 +28,7 @@ class User {
                 if(!error){
                     return resolve(results[0].total > 0);
                 } else {
-                    return;
+                    return resolve(false);
                 }
               }
             );
@@ -71,6 +72,42 @@ class User {
                 { method: "POST"}).then(response => response.json()).then(function(google_response) {
                 if(google_response["success"] == true) {
                     return resolve(true);
+                } else {
+                    return resolve(false);
+                }
+            });
+        });
+    }
+
+    get_user_projects(user_id) {
+        return new Promise((resolve, reject) => {
+            this.con.query('SELECT * FROM projects WHERE creater_id = ?', [user_id], function (error, results) {
+                if(!error) {
+                    return resolve(results);
+                } else {
+                    return resolve(false);
+                }
+            })
+        });
+    }
+
+    create_user_project(user_id, project_name) {
+        return new Promise((resolve, reject) => {
+            this.con.query('INSERT INTO projects (project_name, creater_id) VALUES (?, ?)', [project_name, user_id], function (error, result) {
+                if(!error) {
+                    return resolve(result);
+                } else {
+                    return resolve(false);
+                }
+            });
+        });
+    }
+
+    get_project_info(project_id) {
+        return new Promise((resolve, reject) => {
+            this.con.query('SELECT * FROM projects WHERE id = ?', [project_id], function (error, results) {
+                if(!error) {
+                    return resolve(results);
                 } else {
                     return resolve(false);
                 }

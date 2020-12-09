@@ -5,9 +5,15 @@
 
         <br>
         
-        <b-alert show variant="warning" v-if="this.status == 'fail'" align="center">{{ this.message }}</b-alert>
-        <b-alert show variant="success" v-if="this.status == 'success'" align="center">{{ this.message }}</b-alert>
-        <b-alert show variant="empty" v-if="this.status == 'warning'" align="center">{{ this.message }}</b-alert>
+        <b-alert show dismissible variant="danger" v-if="submitted && errors.has('username')" align="center">{{errors.first('username')}}</b-alert>
+        <b-alert show dismissible variant="danger" v-if="submitted && errors.has('password')" align="center">{{errors.first('password')}}</b-alert>
+        <b-alert show dismissible variant="danger" v-if="submitted && errors.has('email')" align="center">{{errors.first('email')}}</b-alert>
+        <b-alert show dismissible variant="danger" v-if="submitted && errors.has('password_confirmation')" align="center">{{errors.first('password_confirmation')}}</b-alert>
+
+        <b-alert show dismissible variant="success" v-if="successful" align="center">{{ message }}</b-alert>
+        <b-alert show dismissible variant="danger" v-if="submitted && !successful && message" align="center">{{ message }}</b-alert>
+
+
         <div class="form-div">
             <div class="rgstr-btn splits">
                 <p>Already registered?</p>
@@ -18,30 +24,67 @@
                 <button class="active" onclick="window.location.href='/login'">Login</button>
             </div>
             <div class="wrapper">
-                <form v-on:submit.prevent id="login" tabindex="500">
+                <form @submit.prevent="handleRegister" id="login" tabindex="500">
                     <h3>Register</h3>
                     <div class="first_name" style="float: left; width: 50%;">
-                        <input type="text" id="first_name" required>
+                        <input
+                        v-model="user.first_name"
+                        v-validate="'required|min:3|max:20'"
+                        type="text"
+                        class="form-control"
+                        name="first_name"
+                        />
                         <label>First Name</label>
                     </div>
                     <div class="last_name" style="float: right; width: 50%; padding-left: 5px">
-                        <input type="text" id="last_name" required>
+                        <input
+                        v-model="user.last_name"
+                        v-validate="'required|min:3|max:20'"
+                        type="text"
+                        class="form-control"
+                        name="last_name"
+                        />                        
                         <label>Last Name</label>
                     </div>
                     <div class="mail" style="clear: both;">
-                        <input type="email" id="email" required>
+                        <input
+                        v-model="user.email"
+                        v-validate="'required|email|max:50'"
+                        type="email"
+                        class="form-control"
+                        name="email"
+                        />                        
                         <label>Email</label>
                     </div>
                     <div class="uid">
-                        <input type="text" id="username" required>
-                        <label>Username</label>
+                        <input
+                        v-model="user.username"
+                        v-validate="'required|min:6|max:20'"
+                        type="text"
+                        class="form-control"
+                        name="username"
+                        />                        
+                    <label>Username</label>
                     </div>
                     <div class="passwd" style="float: left; width: 50%">
-                        <input type="password" id="password" required>
+                        <input
+                        ref="pass"
+                        v-model="user.password"
+                        data-vv-name="pass"
+                        v-validate="'required|min:6|max:20'"
+                        type="password"
+                        class="form-control"
+                        name="pass"
+                        />                        
                         <label>Password</label>
                     </div>
                     <div class="passwd" style="float: right; width: 50%; padding-left: 5px">
-                        <input type="password" id="confirm_password" required>
+                        <input
+                        v-validate="'required|confirmed:pass'"
+                        type="password"
+                        class="form-control"
+                        name="password"
+                        />                              
                         <label>Confirm password</label>
                     </div>
                     <div style="clear: both;"></div>
@@ -51,7 +94,8 @@
                     sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad">
                     </vue-recaptcha>
                     <div class="submit">
-                        <button class="dark" v-on:click="register()">Register</button>
+                        <button class="dark" :visible="loading">Register</button>
+                        <span v-show="loading" class="spinner-border spinner-border-sm"></span>
                     </div>
                 </form>
             </div>
@@ -62,79 +106,69 @@
 <script>
 
 import navbar from './navbar.vue';
-import axios from 'axios';
+import User from '../models/user_register';
 import VueRecaptcha from 'vue-recaptcha';
 
 export default {
     name: "register", 
     data(){
         return {
-            disable: false
+            user: new User('', '', '', '', '', ''),
+            loading: false,
+            submitted: false,
+            successful: false,
+            message: '',
+            recaptcha_token: ''
         }
     },
     components: {
         navbar,
         VueRecaptcha
     },
-    props: {
-
-        status: String,
-        message: String,
-        recaptcha_token: String
-
-    },
-    methods: {
-        register: function() {
-
-            this.disable = true;            
-
-            let server_ip = window.location.protocol + "//" + window.location.hostname;
-
-            axios.post(server_ip + ":3000/api/register", {
-                
-                first_name: document.getElementById('first_name').value,
-                last_name: document.getElementById('last_name').value,
-                email: document.getElementById('email').value,
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value,
-                recaptcha: this.recaptcha_token || null
-
-            }).then(response => {
-
-                this.status = response.data.status;
-                this.message = response.data.message;
-
-            })
-        },
-        onCaptchaVerified: function (recaptchaToken) {
-            this.recaptcha_token = recaptchaToken;
+    computed: {
+        loggedIn() {
+            return this.$store.state.auth.status.loggedIn;
         }
     },
-    beforeCreate(){
-        let server_ip = window.location.protocol + "//" + window.location.hostname;
-        axios.get(server_ip + ":3000/api/check_session")
-        .then(response => {
+    mounted() {
+        if (this.loggedIn) {
+            this.$router.push('/dashboard');
+        }
+    },
 
-            if(response.data.status == "success") {
+    methods: {    
+    
+        handleRegister() {
 
-                // Session Found
-                this.loggedin = true;
-                this.username = response.data.username;
-
-            } else if (response.data.status == "fail") {
-
-                // No Session Found
-                this.loggedin = false;
-
-            } else {
-
-                // Error
-                this.loggedin = false;
-                
-            }
-        })    
+            this.loading = true;
+            this.message = '';
+            this.submitted = true;
+            this.$validator.validate().then(isValid => {
+                if (!isValid) {
+                    this.loading = false;
+                    window.grecaptcha.reset();
+                    return;
+                }
+                this.$store.dispatch('auth/register', this.user).then(
+                    data => {
+                        this.message = data.message;
+                        this.successful = true;
+                    },
+                    error => {
+                        this.message = (error.response && error.response.data) || error.message || error.toString();
+                        this.successful = false;
+                        this.loading = false;
+                        window.grecaptcha.reset();
+                    }
+                );
+            });
+        },
+        onCaptchaVerified: function (recaptchaToken) {
+            this.user.recaptcha = recaptchaToken;
+        }
     }
 }
+
 </script>
 
 <style scoped>
