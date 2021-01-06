@@ -4,6 +4,7 @@ import mainpage from './components/mainpage.vue'
 import register from './components/register.vue'
 import logout from './components/logout.vue'
 import login from './components/login.vue'
+import pen from './components/pen.vue'
 
 Vue.use(Router);
 
@@ -30,6 +31,10 @@ export const router = new Router({
     {
         path: '/dashboard',
         component: () => import('./components/dashboard.vue')
+    },
+    {
+        path: '/pen/:id',
+        component: pen
     }
 ]
 });
@@ -40,7 +45,7 @@ router.beforeEach((to, from, next) => {
     const loggedIn = localStorage.getItem('user');
   
     if (authRequired && !loggedIn) {
-      next('/login');
+      next('/');
     } else {
       next();
     }

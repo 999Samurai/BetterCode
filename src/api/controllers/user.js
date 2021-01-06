@@ -1,6 +1,5 @@
 const bcrypt = require('bcrypt');
 const fetch = require('isomorphic-fetch');
-const { user } = require('../../../config/database');
 
 class User {
 
@@ -44,6 +43,18 @@ class User {
                     return resolve(error);
                 }
             });
+        });
+    }
+
+    get_user_info(user_id) {
+        return new Promise((resolve, reject) => {
+            this.con.query('SELECT * FROM users WHERE id = ?', [user_id], function (error, results) {
+                if(!error) {
+                    return resolve(results);
+                } else {
+                    return resolve(false);
+                }
+            })
         });
     }
 
@@ -102,19 +113,7 @@ class User {
             });
         });
     }
-
-    get_project_info(project_id) {
-        return new Promise((resolve, reject) => {
-            this.con.query('SELECT * FROM projects WHERE id = ?', [project_id], function (error, results) {
-                if(!error) {
-                    return resolve(results);
-                } else {
-                    return resolve(false);
-                }
-            });
-        });
-    }
-
+    
     generate_email_text(uuid) {
             return (`<!doctype html>
             <html>

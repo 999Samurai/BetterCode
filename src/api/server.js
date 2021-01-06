@@ -47,11 +47,14 @@ const port = 3000;
  */
 
 const User = require("./controllers/user.js");
+const Projects = require("./controllers/projects.js");
 const Auth = require("./controllers/auth.js");
 const _auth = new Auth();
+const _projects = new Projects(connection);
+const user = new User(connection, process.env.RECAPTCHA_SECRET);
 
  /*
-  *  Creating sessions environment
+  *  Creating express environment
   */
 
 app.use(cors());
@@ -77,8 +80,6 @@ low(adapter).then(db => {
       
       return res.send({status: "empty", message: "Some values of the form are empty."});
     }
-
-    let user = new User(connection, process.env.RECAPTCHA_SECRET);
 
     let captcha_status = await user.check_captcha(recaptcha_token);
     if(!captcha_status) {
@@ -134,8 +135,6 @@ low(adapter).then(db => {
       
       return res.send({status: "empty", message: "Some values of the form are empty."});
     }
-
-    let user = new User(connection, process.env.RECAPTCHA_SECRET);
 
     let captcha_status = await user.check_captcha(recaptcha_token);
     if(!captcha_status) {
@@ -223,7 +222,6 @@ low(adapter).then(db => {
 
   app.get('/api/user/projects', _auth.verifyJWT, async (req, res, next) => {
 
-    let user = new User(connection, process.env.RECAPTCHA_SECRET);
     let projects = await user.get_user_projects(req.userId);
     if(projects) {
       return res.status(200).send({auth: true, projects: projects});
@@ -234,16 +232,57 @@ low(adapter).then(db => {
 
   app.post('/api/user/create', _auth.verifyJWT, async (req, res, next) => {
 
-    let user = new User(connection, process.env.RECAPTCHA_SECRET);
     let project = await user.create_user_project(req.userId, req.body.name);
     if(project) {
-      let project_info = await user.get_project_info(project.insertId);
+      let project_info = await _projects.get_info(project.insertId);
       return res.status(200).send({auth: true, success: true, project: project_info});
     } else {
       return res.status(200).send({auth: true, success: false});
     }
   })
 
+  app.post('/api/projects/info', _auth.verifyJWT, async (req, res, next) => {
+
+    let info = await _projects.get_info(req.body.id);
+    if(info) {
+      return res.status(200).send({ auth: true, success: true, project: info});
+    } else {
+      return res.status(200).send({ auth: true, success: false });
+    }
+
+  })
+
+  app.post('/api/projects/:language/write/:id', _auth.verifyJWT, async (req, res, next) => {
+
+    let info = await _projects.get_info(req.params.id);
+    if(info) {
+      let user_info = await user.get_user_info(info[0].creater_id);
+      let write = await _projects.code_to_file(user_info[0].username, req.params.id, info[0].project_name, req.params.language, req.body.code);
+      if(write) {
+        return res.status(200).send({ auth: true, success: true });
+      }
+    } else {
+      return res.status(200).send({ auth: true, success: false });
+    }
+
+  })
+
+  app.get('/api/projects/:language/read/:id', _auth.verifyJWT, async (req, res, next) => {
+
+    let info = await _projects.get_info(req.params.id);
+    if(info) {
+      let user_info = await user.get_user_info(info[0].creater_id);
+      let read = await _projects.getFileContent(user_info[0].username, req.params.id, info[0].project_name, req.params.language);
+      if(read) {
+        return res.status(200).send({ auth: true, success: true, code: read });
+      } else {
+        return res.status(200).send({ auth: true, success: false });
+      }
+    } else {
+      return res.status(200).send({ auth: true, success: false });
+    }
+
+  })
 }).then(() => {
   app.listen(3000, () => console.log('listening on port 3000'))
 })

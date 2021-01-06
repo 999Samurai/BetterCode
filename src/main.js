@@ -11,6 +11,7 @@ import {
   faSignInAlt,
   faSignOutAlt
 } from '@fortawesome/free-solid-svg-icons';
+import VueCodemirror from 'vue-codemirror'
 
 import App from './App.vue'
 
@@ -20,11 +21,13 @@ import store from './store';
 import 'aos/dist/aos.css'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
+import 'codemirror/lib/codemirror.css'
 
 Vue.config.productionTip = false
-Vue.use(BootstrapVue)
-Vue.use(IconsPlugin)
+Vue.use(BootstrapVue);
+Vue.use(IconsPlugin);
 Vue.use(VeeValidate);
+Vue.use(VueCodemirror);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 AOS.init()
 

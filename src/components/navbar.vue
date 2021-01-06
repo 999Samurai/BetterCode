@@ -25,6 +25,9 @@
             <b-nav-item href="#" class="text">
               <span class="nav-link-inner--text">Discover</span>
             </b-nav-item>
+            <b-nav-item href="/dashboard" class="text">
+              <span class="nav-link-inner--text">Dashboard</span>
+            </b-nav-item>
             <b-nav-item-dropdown right class="button">
               <template #button-content>
                 <img src="../assets/images/avatars/user.png" alt="user-image" id="user_image" class="rounded-circle"><span> {{ username }}</span>

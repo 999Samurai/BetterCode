@@ -14,20 +14,20 @@
             id="modal-prevent-closing"
             ref="modal" 
             title="Create new project"
+            @show="resetModal"
+            @hidden="resetModal"
             @ok="handleCreate"
             >
                 <form ref="form" @submit.stop.prevent="handleSubmit">
                     <b-form-group
-                    :state="nameState"
                     label="Project Name"
                     label-for="project_name"
                     invalid-feedback="Project name is required"
                     >
                     <b-form-input
                         id="project_name"
-                        v-validate="'required|min:3|max:20'"
                         v-model="name"
-                        :state="nameState"
+                        v-validate="'required|min:3|max:20'"
                         required
                     ></b-form-input>
                     </b-form-group>
@@ -40,20 +40,22 @@
                 <div class="row mt-5 justify-content-center">
                     <p align="center" v-if="projects.length == 0">You don't have any projects.</p>
 
-                    <div v-for="project in projects" v-bind:key="project.id">
-                        <b-card
-                        no-body
-                        style="width: 15rem; margin: 10px;"
-                        v-bind:img-src="getImagePath(project.project_thumb)"
-                        img-alt="Project Image"
-                        img-top
-                        >
+                        <div v-for="project in projects" v-bind:key="project.id">
+                            <a :href="'/pen/' + project.id">
+                                <b-card
+                                no-body
+                                style="width: 15rem; margin: 10px;"
+                                v-bind:img-src="getImagePath(project.project_thumb)"
+                                img-alt="Project Image"
+                                img-top
+                                >
 
-                            <template #header>
-                                <h4 class="mb-0">{{ project.project_name }}</h4>
-                            </template>
-                        </b-card>
-                    </div>
+                                    <template #header>
+                                        <h4 class="mb-0">{{ project.project_name }}</h4>
+                                    </template>
+                                </b-card>
+                            </a>
+                        </div>
                 </div>
             </div>
         </div>
@@ -69,6 +71,7 @@ export default {
     name: "dashboard",
     data() {
         return {
+            name: '',
             successful: false,
             projects: []
         }
@@ -91,9 +94,7 @@ export default {
                 }
             });
 
-            let name = document.getElementById("project_name").value
-
-            UserService.CreateProject(name).then(response => {
+            UserService.createProject(this.name).then(response => {
 
                 if(response.data.success == true) {
 
@@ -107,6 +108,11 @@ export default {
                 }
 
             })
+        },
+            
+        resetModal() {
+            this.name = ''
+            this.nameState = null
         },
 
         getImagePath(photo) {
@@ -126,9 +132,6 @@ export default {
                 this.$router.push('/logout');
 
             }
-
-            console.log(this.projects);
-
         });
     }
 }
@@ -147,6 +150,26 @@ export default {
 
     .projects {
         margin-top: 5%;
+    }
+
+    /* unvisited link */
+    a:link {
+        color: black;
+    }
+
+    /* visited link */
+    a:visited {
+        color: black;
+    }
+
+    /* mouse over link */
+    a:hover {
+        color: black;
+    }
+
+    /* selected link */
+    a:active {
+        color: black;
     }
 
 </style>

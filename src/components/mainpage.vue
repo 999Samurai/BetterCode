@@ -143,6 +143,7 @@
 
 import navbar from './navbar.vue'
 import foot from './footer.vue'
+import UserService from '../services/user.service';
 
 export default {
     data() {
@@ -172,6 +173,16 @@ export default {
     mounted: function() {
       this.status = this.$route.query.status;
     },
+    beforeMount() {
+        UserService.getUserProjects().then(response => {
+
+            if (response.data.auth == false) { // Expired or invalid token
+
+                this.$router.push('/logout');
+
+            }
+        });
+    }
 }
 </script>
 
