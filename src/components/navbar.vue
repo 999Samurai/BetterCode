@@ -66,7 +66,7 @@ export default {
   }
   
   #text {
-    margin-top: 3%;
+    margin-top: 5%;
   }
 
   span {
@@ -82,7 +82,7 @@ export default {
   }
 
   .button {
-    margin-top: 3%;
+    margin-top: 5%;
   }
 
   .button:hover {

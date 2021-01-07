@@ -51,7 +51,7 @@
                                 >
 
                                     <template #header>
-                                        <h4 class="mb-0">{{ project.project_name }}</h4>
+                                        <h5 class="mb-0">{{ project.project_name }}</h5>
                                     </template>
                                 </b-card>
                             </a>
@@ -152,24 +152,18 @@ export default {
         margin-top: 5%;
     }
 
-    /* unvisited link */
     a:link {
         color: black;
     }
 
-    /* visited link */
     a:visited {
         color: black;
     }
 
-    /* mouse over link */
     a:hover {
         color: black;
+        text-decoration: none;
     }
 
-    /* selected link */
-    a:active {
-        color: black;
-    }
 
 </style>

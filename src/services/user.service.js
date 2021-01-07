@@ -30,6 +30,10 @@ class UserService {
   getFileContent(project_id, project_language) {
     return axios.get(API_URL + 'projects/' + project_language + '/read/' + project_id, { headers: authHeader() });
   }
+
+  updateProject(project_settings) {
+    return axios.post(API_URL + 'projects/update', { project: project_settings }, { headers: authHeader() });
+  }
 }
 
 export default new UserService();

@@ -12,6 +12,7 @@ import {
   faSignOutAlt
 } from '@fortawesome/free-solid-svg-icons';
 import VueCodemirror from 'vue-codemirror'
+import VueHtml2Canvas from 'vue-html2canvas';
 
 import App from './App.vue'
 
@@ -27,6 +28,7 @@ Vue.config.productionTip = false
 Vue.use(BootstrapVue);
 Vue.use(IconsPlugin);
 Vue.use(VeeValidate);
+Vue.use(VueHtml2Canvas);
 Vue.use(VueCodemirror);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 AOS.init()

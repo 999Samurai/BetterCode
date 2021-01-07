@@ -7,14 +7,11 @@
             <h1 style="float: left;">
                 <div class="changelog-badge">
                     <b-navbar-brand href="/">BetterCode</b-navbar-brand>
-
-
+                    
                     <b-modal
                     id="modal-prevent-closing"
                     ref="modal" 
                     title="Update Project"
-                    @show="resetModal"
-                    @hidden="resetModal"
                     @ok="handleUpdate"
                     >
                         <form ref="form" @submit.stop.prevent="handleSubmit">
@@ -51,7 +48,7 @@
 
         </header>
 
-        <multipane class="vertical-panes" layout="vertical">
+        <multipane class="vertical-panes" layout="vertical" v-if="!this.fullscreen">
             <div class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
                 <div>
                     <h6 class="title is-6">HTML</h6>
@@ -78,7 +75,7 @@
         </multipane>
 
         <multipane class="vertical-panes" layout="vertical" style="margin-top: -1px;">
-            <div class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
+            <div  v-if="!this.fullscreen" class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
                 <div>
                     <h6 class="title is-6">Javascript</h6>
                     <codemirror
@@ -90,10 +87,22 @@
                 </div>
             </div>
             <multipane-resizer></multipane-resizer>
-            <div class="pane" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff' }">
+            <div class="pane" v-if="this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff', height: '92vh' }">
                 <div>
-                    <h6 class="title is-6">Result</h6>
-                    <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" id="compile" style="width: 100%; height: 275px; background-color: white;"></iframe>
+                    <h6 class="title is-6" style="float: left;">Result</h6>
+                    <a style="cursor: pointer;"><b-icon v-on:click="minimizeScreen()" icon="fullscreen-exit" aria-hidden="true" style="float: right;"></b-icon></a>
+                    <div ref="compile" style="top: 0; bottom: 0; left: 0; right: 0;">
+                        <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear:both; width: 100%; height: 85vh; background-color: white;"></iframe>
+                    </div>
+                </div>
+            </div>
+            <div class="pane" v-if="!this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff' }">
+                <div>
+                    <h6 class="title is-6" style="float: left;">Result</h6>
+                    <a style="cursor: pointer;"><b-icon v-on:click="setFullscreen()" icon="fullscreen" aria-hidden="true" style="float: right;"></b-icon></a>
+                    <div ref="compile" style="top: 0; bottom: 0; left: 0; right: 0;">
+                        <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear: both; width: 100%; height: 300px; background-color: white;"></iframe>
+                    </div>
                 </div>
             </div>
         </multipane>
@@ -121,6 +130,7 @@
             return {
                 successful: '',
                 project_info: {},
+                fullscreen: false,
                 dataReady: false,
                 code: {
                     html: '',
@@ -220,12 +230,28 @@
         },
         methods: {  
 
-            resetModal() {
-                this.name = ''
-                this.nameState = null
+            async downloadVisualReport () {
+
+                const el = this.$refs.compile;
+
+                const options = {
+                    type: 'dataURL'
+                }
+                console.log(await this.$html2canvas(el, options));
+
             },
 
             handleUpdate() {
+
+                UserService.updateProject(this.project_info).then(response => {
+
+                    if(response.data.success == false) {
+
+                        this.project_info = response.data.project;
+
+                    }
+
+                });
 
             },
 
@@ -245,8 +271,13 @@
 
                 this.code.javascript = cm;
                 UserService.writeToFile(this.project_info.id, 'js', cm);
+            },
+            setFullscreen() {
+                this.fullscreen = true;
+            }, 
+            minimizeScreen() {
+                this.fullscreen = false;
             }
-
         }
     }
 
@@ -279,6 +310,8 @@ header div h2 {
     transition: all .15s;
     right: 10px;
     color: #fff;
+    text-decoration: none;
+    outline: none;
     cursor: pointer;
 }
 
@@ -286,6 +319,8 @@ header div h2 {
 
     text-decoration: none;
     color: #fff;
+    outline: none;
+    box-shadow: none !important;
 
 }
 

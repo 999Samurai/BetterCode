@@ -283,6 +283,22 @@ low(adapter).then(db => {
     }
 
   })
+  
+  app.post('/api/projects/update', _auth.verifyJWT, async (req, res, next) => {
+
+    let user_info = await user.get_user_info(req.body.project.creater_id);
+    let update = await _projects.update_project(req.body.project, user_info[0].username);
+    if(update) {
+
+      return res.status(200).send({ auth: true, success: true, project: update });
+
+    } else {
+
+      return res.status(200).send({ auth: true, success: false, project: req.body.project });
+
+    }
+    
+  });
 }).then(() => {
   app.listen(3000, () => console.log('listening on port 3000'))
 })
