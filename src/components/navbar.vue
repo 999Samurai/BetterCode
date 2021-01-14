@@ -22,7 +22,7 @@
             </b-nav-item>
         </b-navbar-nav>
         <b-navbar-nav class="ml-auto" v-else-if="loggedin == true && page != 'login' && page != 'register'">
-            <b-nav-item href="#" class="text">
+            <b-nav-item href="/discover" class="text">
               <span class="nav-link-inner--text">Discover</span>
             </b-nav-item>
             <b-nav-item href="/dashboard" class="text">
@@ -30,9 +30,9 @@
             </b-nav-item>
             <b-nav-item-dropdown right class="button">
               <template #button-content>
-                <img src="../assets/images/avatars/user.png" alt="user-image" id="user_image" class="rounded-circle"><span> {{ username }}</span>
+                <img :src="getImagePath(avatar)" alt="user-image" id="user_image" class="rounded-circle"><span> {{ username }}</span>
               </template>
-              <img src="../assets/images/avatars/user.png" alt="user-image" id="menu_image" class="rounded-circle">
+              <img :src="getImagePath(avatar)" alt="user-image" id="menu_image" class="rounded-circle">
               <p style="color: black; font-size: 15px; text-align: center; margin-bottom: 20px;">Welcome, {{ username }}!</p>
               <b-dropdown-item href="/settings" style="text-align: center;"><b-icon icon="gear"></b-icon> Settings</b-dropdown-item>
               <div class="dropdown-divider"></div>
@@ -54,7 +54,13 @@ export default {
   props: {
     loggedin: Boolean,
     username: String,
-    page: String
+    page: String,
+    avatar: String
+  },
+  methods: {
+    getImagePath(photo) {
+        return require('../assets/images/avatars/' + photo);
+    }
   }
 }
 </script>

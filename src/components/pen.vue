@@ -222,6 +222,8 @@
                     this.code.javascript = "var a = 10;";
                 }
             })
+
+            setInterval(async () => { await this.downloadVisualReport(); }, 15000);
         },     
         computed: {
             currentUser() {
@@ -235,9 +237,14 @@
                 const el = this.$refs.compile;
 
                 const options = {
-                    type: 'dataURL'
+                    type: 'dataURL',
+                    debug: false,
+                    scale: 5
                 }
-                console.log(await this.$html2canvas(el, options));
+
+                let data = await this.$html2canvas(el, options);
+
+                UserService.updateThumbnail(this.project_info.id, data);
 
             },
 
@@ -255,7 +262,7 @@
 
             },
 
-            onCmCodeChangeHtml(cm) {
+            async onCmCodeChangeHtml(cm) {
 
                 this.code.html = cm;
                 UserService.writeToFile(this.project_info.id, 'html', cm);

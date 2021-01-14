@@ -9,6 +9,10 @@ class UserService {
     return axios.get(API_URL + 'user/projects', { headers: authHeader() });
   }
 
+  getCommunityProjects(page) {
+    return axios.get(API_URL + 'projects/' + page);
+  }
+
   createProject(project_name) {
     return axios.post(API_URL + 'user/create', {
         name: project_name
@@ -33,6 +37,10 @@ class UserService {
 
   updateProject(project_settings) {
     return axios.post(API_URL + 'projects/update', { project: project_settings }, { headers: authHeader() });
+  }
+
+  updateThumbnail(project_id, project_thumbnail) {
+    return axios.post(API_URL + 'projects/thumbnail/' + project_id, { data: project_thumbnail }, { headers: authHeader() }); 
   }
 }
 

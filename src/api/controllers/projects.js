@@ -1,10 +1,25 @@
 const fs = require('fs');
+const { resolve } = require('path');
 const path = require('path');
 
 class Projects {
 
     constructor(con, secret) {
         this.con = con;
+    }
+
+    getProjects(page) {
+        return new Promise((resolve, reject) => {
+            var offset = (page - 1) * 16;
+            var limit = page * 16;
+            this.con.query('SELECT projects.*, users.username, users.avatar FROM projects INNER JOIN users ON projects.creater_id = users.id WHERE projects.private = 0 ORDER BY projects.id LIMIT ?, ?', [offset, limit], function (error, results) {
+                if(!error) {
+                    return resolve(results);
+                } else {
+                    return resolve(false);
+                }
+            });
+        });
     }
 
     get_info(project_id) {
@@ -81,6 +96,27 @@ class Projects {
 
                 });
             }
+        });
+    }
+
+    saveThumbnail(project_info, project_data) {
+
+        return new Promise((resolve, reject) => {
+
+            var base64Data = project_data.split("base64,")[1];
+            let filename = "" + project_info[0].id + '_' + project_info[0].project_name + ".png";
+            let filtered_filename = filename.replace(/\s/g, '');
+            var image_path = path.join(__dirname, '../../', 'assets/images/thumbs/' + filtered_filename);
+            
+            fs.writeFileSync(image_path, base64Data, 'base64');
+
+            this.con.query('UPDATE projects SET project_thumb = ? WHERE id = ?', [filtered_filename, project_info[0].id], function (error, results) {
+                if(!error) {
+                    return resolve(results);
+                } else {
+                    return resolve(false);
+                }
+            });
         });
     }
 }

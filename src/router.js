@@ -5,6 +5,7 @@ import register from './components/register.vue'
 import logout from './components/logout.vue'
 import login from './components/login.vue'
 import pen from './components/pen.vue'
+import discover from './components/discover.vue'
 
 Vue.use(Router);
 
@@ -35,6 +36,10 @@ export const router = new Router({
     {
         path: '/pen/:id',
         component: pen
+    },
+    {
+        path: '/discover',
+        component: discover
     }
 ]
 });

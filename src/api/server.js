@@ -6,10 +6,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const mysql = require('mysql');
-const low = require('lowdb')
 var jwt = require('jsonwebtoken');
 require('dotenv-safe').config()
 
+const low = require('lowdb')
 const FileAsync = require('lowdb/adapters/FileAsync')
 
  /*
@@ -58,7 +58,7 @@ const user = new User(connection, process.env.RECAPTCHA_SECRET);
   */
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({
   extended: false
 }));
@@ -103,11 +103,12 @@ low(adapter).then(db => {
           let user_id = get_results.id;
           let user_email = get_results.email;
           let user_name = get_results.username;
+          let avatar = get_results.avatar;
 
-          var token = jwt.sign({ user_id, user_email, user_name }, process.env.SECRET, {
+          var token = jwt.sign({ user_id, user_email, user_name, avatar }, process.env.SECRET, {
             expiresIn: 43200 // expires in 12 hours
           });
-          return res.send({status: "success", user: { auth: token, user_id: user_id, user_email: user_email, username: user_name }});
+          return res.send({status: "success", user: { auth: token, user_id: user_id, user_email: user_email, username: user_name, avatar: avatar }});
         } else {
           return res.send({status: "fail", message: "Please verify your email first."});
         }
@@ -299,6 +300,26 @@ low(adapter).then(db => {
     }
     
   });
+
+  app.post('/api/projects/thumbnail/:id', _auth.verifyJWT, async (req, res, next) => {
+
+    let project_image = req.body.data;
+
+    let info = await _projects.get_info(req.params.id);
+    if(info) {
+      await _projects.saveThumbnail(info, project_image);
+    }
+
+    return res.status(200).send({ auth: true });
+
+  })
+
+  app.get('/api/projects/:page', async (req, res) => {
+
+    let projects = await _projects.getProjects(req.params.page);
+    return res.status(200).send({ projects: projects });
+
+  });
 }).then(() => {
-  app.listen(3000, () => console.log('listening on port 3000'))
+  app.listen(port, () => console.log('listening on port 3000'))
 })

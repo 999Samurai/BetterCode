@@ -2,7 +2,7 @@
 
     <div>
 
-        <navbar :loggedin="true" v-bind:username="currentUser.username"/>
+        <navbar :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar"/>
         
         <div class="container">
         
@@ -37,19 +37,19 @@
             <div style="clear: both;"></div>
 
             <div class="projects">
-                <div class="row mt-5 justify-content-center">
+                <div class="row justify-content-center">
                     <p align="center" v-if="projects.length == 0">You don't have any projects.</p>
 
                         <div v-for="project in projects" v-bind:key="project.id">
                             <a :href="'/pen/' + project.id">
                                 <b-card
                                 no-body
+                                img-height="125px"
                                 style="width: 15rem; margin: 10px;"
                                 v-bind:img-src="getImagePath(project.project_thumb)"
                                 img-alt="Project Image"
                                 img-top
                                 >
-
                                     <template #header>
                                         <h5 class="mb-0">{{ project.project_name }}</h5>
                                     </template>
