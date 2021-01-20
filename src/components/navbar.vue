@@ -7,7 +7,7 @@
 
       <b-collapse id="nav-collapse" is-nav>
         <b-navbar-nav class="ml-auto" v-if="loggedin == false && page != 'login' && page != 'register'">
-            <b-nav-item href="#" id="text">
+            <b-nav-item href="/discover" id="text">
                   <span class="nav-link-inner--text">Discover</span>
             </b-nav-item>
             <b-nav-item href="/login">
@@ -30,9 +30,12 @@
             </b-nav-item>
             <b-nav-item-dropdown right class="button">
               <template #button-content>
-                <img :src="getImagePath(avatar)" alt="user-image" id="user_image" class="rounded-circle"><span> {{ username }}</span>
+                <vue-initials-img v-if="avatar == 'default.png'" :name="username" size="25" class="rounded-circle" style="margin-bottom: 2px;"/>     
+                <img v-if="avatar != 'default.png'" :src="getImagePath(avatar)" alt="user-image" id="user_image" class="rounded-circle">
+                <span>{{ username }}</span>
               </template>
-              <img :src="getImagePath(avatar)" alt="user-image" id="menu_image" class="rounded-circle">
+              <vue-initials-img v-if="avatar == 'default.png'" :name="username" size="100" id="menu_image" class="rounded-circle"/>
+              <img v-if="avatar != 'default.png'" :src="getImagePath(avatar)" alt="user-image" id="menu_image" class="rounded-circle">
               <p style="color: black; font-size: 15px; text-align: center; margin-bottom: 20px;">Welcome, {{ username }}!</p>
               <b-dropdown-item href="/settings" style="text-align: center;"><b-icon icon="gear"></b-icon> Settings</b-dropdown-item>
               <div class="dropdown-divider"></div>
@@ -45,12 +48,13 @@
 </template>
 
 <script>
+
 export default {
   name: "navbar",
   data() {
     return {
     }
-  }, 
+  },
   props: {
     loggedin: Boolean,
     username: String,
@@ -79,10 +83,6 @@ export default {
     color: white;
   }
 
-  button {
-    margin-top: 5%;
-  }
-
   .text {
     margin-top: 5%;
   }
@@ -98,7 +98,6 @@ export default {
   #user_image {
     height: 32px;
     width: 32px;
-    margin-right: 5px;
   }
 
   #menu_image {
@@ -109,14 +108,15 @@ export default {
     margin-right: auto;
   }
 
-  .center {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+  .center { 
+
+    margin-top: 0%;
+  
   }
 
   .rounded-circle {
-    border-radius: 50%!important;
+    border-radius: 50% !important;
+    margin-right: 5px;
   }
 
 </style>

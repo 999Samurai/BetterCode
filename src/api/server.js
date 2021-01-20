@@ -221,10 +221,22 @@ low(adapter).then(db => {
     }
   });
 
+  app.get('/api/user/info/:id', async (req, res) => {
+
+    let user_info = await user.get_user_info(req.params.id);
+    let user_projects = await user.get_user_projects(req.params.id);
+
+    if(Object.keys(user_info).length > 0 && Object.keys(user_projects).length > 0) {
+      return res.status(200).send({success: true, projects: user_projects, user: { username: user_info[0].username, email: user_info[0].email, avatar: user_info[0].avatar }});
+    } else {
+      return res.status(200).send({success: false});
+    }
+  })
+
   app.get('/api/user/projects', _auth.verifyJWT, async (req, res, next) => {
 
     let projects = await user.get_user_projects(req.userId);
-    if(projects) {
+    if(Object.keys(projects).length > 0) {
       return res.status(200).send({auth: true, projects: projects});
     } else {
       return res.status(200).send({auth: true, error: true});
@@ -245,7 +257,7 @@ low(adapter).then(db => {
   app.post('/api/projects/info', _auth.verifyJWT, async (req, res, next) => {
 
     let info = await _projects.get_info(req.body.id);
-    if(info) {
+    if(Object.keys(info).length > 0) {
       return res.status(200).send({ auth: true, success: true, project: info});
     } else {
       return res.status(200).send({ auth: true, success: false });
@@ -320,6 +332,7 @@ low(adapter).then(db => {
     return res.status(200).send({ projects: projects });
 
   });
+
 }).then(() => {
   app.listen(port, () => console.log('listening on port 3000'))
 })

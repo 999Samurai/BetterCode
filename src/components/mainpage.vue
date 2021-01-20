@@ -174,19 +174,23 @@ export default {
       this.status = this.$route.query.status;
     },
     beforeMount() {
-        UserService.getUserProjects().then(response => {
 
-            if (response.data.auth == false) { // Expired or invalid token
+        if(this.$store.state.auth.status.loggedIn) {
+            UserService.getUserProjects().then(response => {
 
-                this.$router.push('/logout');
+                if (response.data.auth == false) { // Expired or invalid token
 
-            }
-        });
+                    this.$router.push('/logout');
+
+                }
+            });
+        }
     }
 }
 </script>
 
 <style scoped>
+
 
 #img-main-text {
     padding-left: 5%;

@@ -42,8 +42,11 @@
 
             <div style="float: right;">
 
-                <h2 v-b-modal.modal-prevent-closing><b-icon icon="gear"></b-icon> Project Settings</h2>
+                <h2 v-b-modal.modal-prevent-closing v-if="currentUser.user_id == project_info.creater_id"><b-icon icon="gear"></b-icon> Project Settings</h2>
 
+                <b-button variant="primary" size="md" v-if="currentUser.user_id != project_info.creater_id" class="mb-2" style="float: right;">
+                    <b-icon icon="cloud-arrow-down" aria-hidden="true"></b-icon> Clone Project  
+                </b-button>
             </div>
 
         </header>
@@ -53,7 +56,7 @@
                 <div>
                     <h6 class="title is-6">HTML</h6>
                     <codemirror
-                        ref="cmEditor"
+                        ref="cmEditorHtml"
                         :value="this.code.html"
                         :options="cmOptionsHtml"
                         @input="onCmCodeChangeHtml"
@@ -65,7 +68,7 @@
                 <div>
                     <h6 class="title is-6">CSS</h6>
                     <codemirror
-                        ref="cmEditor"
+                        ref="cmEditorCss"
                         :value="this.code.css"
                         :options="cmOptionsCss"
                         @input="onCmCodeChangeCss"
@@ -75,11 +78,11 @@
         </multipane>
 
         <multipane class="vertical-panes" layout="vertical" style="margin-top: -1px;">
-            <div  v-if="!this.fullscreen" class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
+            <div v-if="!this.fullscreen" class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
                 <div>
                     <h6 class="title is-6">Javascript</h6>
                     <codemirror
-                        ref="cmEditor"
+                        ref="cmEditorJs"
                         :value="this.code.javascript"
                         :options="cmOptionsJs"
                         @input="onCmCodeChangeJs"
@@ -223,7 +226,13 @@
                 }
             })
 
-            setInterval(async () => { await this.downloadVisualReport(); }, 15000);
+            if(this.currentUser.user_id != this.project_info.creater_id) {
+                this.$refs.cmEditorHtml.codemirror.setOption("readOnly", "nocursor");
+                this.$refs.cmEditorCss.codemirror.setOption("readOnly", "nocursor");
+                this.$refs.cmEditorJs.codemirror.setOption("readOnly", "nocursor");
+            }
+
+            setInterval(async () => { await this.downloadVisualReport(); }, 60000);
         },     
         computed: {
             currentUser() {
@@ -320,6 +329,14 @@ header div h2 {
     text-decoration: none;
     outline: none;
     cursor: pointer;
+}
+
+header div button {
+    position: absolute;
+    font-size: 16px;
+    top: 10px;
+    transition: all .15s;
+    right: 10px;
 }
 
 .changelog-badge .navbar-brand {

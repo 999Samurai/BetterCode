@@ -13,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import VueCodemirror from 'vue-codemirror'
 import VueHtml2Canvas from 'vue-html2canvas';
+import VueInitialsImg from 'vue-initials-img';
 
 import App from './App.vue'
 
@@ -30,6 +31,7 @@ Vue.use(IconsPlugin);
 Vue.use(VeeValidate);
 Vue.use(VueHtml2Canvas);
 Vue.use(VueCodemirror);
+Vue.use(VueInitialsImg);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 AOS.init()
 

@@ -5,6 +5,10 @@ const API_URL = 'http://localhost:3000/api/';
 
 class UserService {
 
+  getPublicUserInfo(user_id) {
+    return axios.get(API_URL + 'user/info/' + user_id);
+  }
+
   getUserProjects() {
     return axios.get(API_URL + 'user/projects', { headers: authHeader() });
   }

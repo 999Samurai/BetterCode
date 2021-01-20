@@ -12,7 +12,7 @@ class Projects {
         return new Promise((resolve, reject) => {
             var offset = (page - 1) * 16;
             var limit = page * 16;
-            this.con.query('SELECT projects.*, users.username, users.avatar FROM projects INNER JOIN users ON projects.creater_id = users.id WHERE projects.private = 0 ORDER BY projects.id LIMIT ?, ?', [offset, limit], function (error, results) {
+            this.con.query('SELECT projects.*, users.username, users.avatar FROM projects INNER JOIN users ON projects.creater_id = users.id WHERE projects.private = 0 ORDER BY last_modification DESC LIMIT ?, ?', [offset, limit], function (error, results) {
                 if(!error) {
                     return resolve(results);
                 } else {

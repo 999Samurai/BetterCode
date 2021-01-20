@@ -1,36 +1,50 @@
 <template>
     <div>
-        <navbar :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar"/>    
+    
+        
+        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar"/>
+        <navbar v-if="!currentUser" :loggedin="false"/>
 
         <div class="projects">
-            <div class="row justify-content-center">
-                <p align="center" v-if="projects.length == 0">You don't have any projects.</p>
+            <div class="row">
+                <p align="center" v-if="projects.length == 0" style="color: white;">There is no more projects to show.</p>
 
                 <div v-for="project in projects" v-bind:key="project.id">
                     <a :href="'/pen/' + project.id">
                         <b-card
                         no-body
                         img-height="125px"
-                        style="width: 16rem; margin: 10px;"
+                        bg-variant="dark"
+                        style="width: 16rem; margin: 10px; color: white;"
                         v-bind:img-src="getThumbImagePath(project.project_thumb)"
                         img-alt="Project Image"
                         img-top
                         >
-                            <template #header style="align-content: center;">
-                                <img align="left" width="50px" height="50px" style="margin-right: 5px" :src="getUserImagePath(project.avatar)">
-                                <h5 style="font-size: 16px;">{{ project.project_name }}</h5>
-                                <h5 class="mb-0" style="margin-top: 2%; font-size: 12px;">Created by: {{ project.username }}</h5>
-                                <div style="clear: both;"></div>
+                            <template #header>
+                                <div class="row">
+                                   <div class="col-md-3">
+                                        <a :href="'/user-' + project.creater_id">
+                                            <vue-initials-img v-if="project.avatar == 'default.png'" :name="project.username" size="40" style="border-radius: 10px;"/>
+                                            <img v-if="project.avatar != 'default.png'" width="50px" height="50px" style="border-radius: 10px;" :src="getUserImagePath(project.avatar)">
+                                        </a>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <h5 style="font-size: 16px; color: white;">{{ project.project_name }}</h5>
+                                        <a :href="'/user-' + project.creater_id"><h5 class="mb-0" style="margin-top: 2%; font-size: 12px; color: white;"> Created by: {{ project.username }}</h5></a>
+                                    </div>
+                                </div>
                             </template>
                         </b-card>
                     </a>
                 </div>
-                <b-button variant="primary" size="md" class="mb-2" style="margin: 10px;">
-                    <b-icon icon="plus" aria-hidden="true"></b-icon>Previous
+            </div>
+            <div align="center">
+                <b-button v-if="projects.length == 16 || page != 1" @click="back()" variant="primary" size="md" class="mb-2" style="margin: 10px;">
+                    <b-icon icon="arrow-left-short" aria-hidden="true"></b-icon> Back
                 </b-button>
 
-                <b-button variant="primary" size="md" class="mb-2" style="margin: 10px;">
-                    <b-icon icon="plus" aria-hidden="true"></b-icon>Next  
+                <b-button v-if="projects.length == 16" @click="next()" variant="primary" size="md" class="mb-2" style="margin: 10px;">
+                    Next <b-icon icon="arrow-right-short" aria-hidden="true"></b-icon> 
                 </b-button>
             </div>
         </div>
@@ -65,13 +79,40 @@ export default {
 
         getThumbImagePath(photo) {
             return require('../assets/images/thumbs/' + photo);
+        },
+        next() {
+
+            this.page += 1;
+
+            UserService.getCommunityProjects(this.page).then(response => {
+                if(!response.data.projects) {
+                    this.projects = [];
+                } else {
+                    this.projects = response.data.projects;
+                }
+            });
+        }, 
+        back() {
+
+            this.page -= 1;
+
+            UserService.getCommunityProjects(this.page).then(response => {
+                if(!response.data.projects) {
+                    this.projects = [];
+                } else {
+                    this.projects = response.data.projects;
+                }            
+            });
         }
     },
     beforeMount() {
 
         UserService.getCommunityProjects(this.page).then(response => {
-            this.projects = response.data.projects;
-            console.log(this.projects);
+            if(!response.data.projects) {
+                    this.projects = [];
+                } else {
+                    this.projects = response.data.projects;
+            }
         });
     }
 }

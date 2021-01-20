@@ -6,6 +6,8 @@ import logout from './components/logout.vue'
 import login from './components/login.vue'
 import pen from './components/pen.vue'
 import discover from './components/discover.vue'
+import user_profile from './components/user-profile.vue'
+import settings from './components/settings.vue'
 
 Vue.use(Router);
 
@@ -40,16 +42,24 @@ export const router = new Router({
     {
         path: '/discover',
         component: discover
+    },
+    {
+        path: '/user-:id',
+        component: user_profile
+    },
+    {
+        path: '/settings',
+        component: settings
     }
 ]
 });
 
 router.beforeEach((to, from, next) => {
-    const publicPages = ['/login', '/register', '/'];
+    const publicPages = ['/login', '/register', '/', '/discover'];
     const authRequired = !publicPages.includes(to.path);
     const loggedIn = localStorage.getItem('user');
   
-    if (authRequired && !loggedIn) {
+    if (!to.path.includes("user-") && authRequired && !loggedIn) {
       next('/');
     } else {
       next();

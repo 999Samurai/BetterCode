@@ -37,7 +37,7 @@
             <div style="clear: both;"></div>
 
             <div class="projects">
-                <div class="row justify-content-center">
+                <div class="row">
                     <p align="center" v-if="projects.length == 0">You don't have any projects.</p>
 
                         <div v-for="project in projects" v-bind:key="project.id">
@@ -45,7 +45,8 @@
                                 <b-card
                                 no-body
                                 img-height="125px"
-                                style="width: 15rem; margin: 10px;"
+                                bg-variant="dark"
+                                style="width: 15rem; margin: 10px; color: white;"
                                 v-bind:img-src="getImagePath(project.project_thumb)"
                                 img-alt="Project Image"
                                 img-top
