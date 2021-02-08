@@ -254,6 +254,10 @@ low(adapter).then(db => {
     }
   })
 
+  /*app.post("/api/user/avatar", _auth.verifyJWT, (req, res, next) => {
+
+  })*/
+
   app.post('/api/projects/info', _auth.verifyJWT, async (req, res, next) => {
 
     let info = await _projects.get_info(req.body.id);

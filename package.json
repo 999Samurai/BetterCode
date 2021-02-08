@@ -30,6 +30,7 @@
     "nodemailer": "^6.4.16",
     "vee-validate": "^2.2.15",
     "vue": "^2.6.12",
+    "vue-avatar-cropper": "^1.0.9",
     "vue-codemirror": "^4.0.6",
     "vue-html2canvas": "0.0.4",
     "vue-initials-img": "^1.0.4",
