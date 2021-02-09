@@ -27,32 +27,36 @@ class UserService {
     }, { headers: authHeader() });
   }
 
-  getProjectInfo(project_id) {
+  getProjectInfo(projectId) {
     return axios.post(API_URL + 'projects/info', {
-      id: project_id
+      id: projectId
     }, { headers: authHeader() });
   }
 
-  writeToFile(project_id, project_language, code) {
-    return axios.post(API_URL + 'projects/' + project_language + '/write/' + project_id, {
+  writeToFile(projectId, project_language, code) {
+    return axios.post(API_URL + 'projects/' + project_language + '/write/' + projectId, {
       code: code
     }, { headers: authHeader() });
   }
 
-  getFileContent(project_id, project_language) {
-    return axios.get(API_URL + 'projects/' + project_language + '/read/' + project_id, { headers: authHeader() });
+  getFileContent(projectId, project_language) {
+    return axios.get(API_URL + 'projects/' + project_language + '/read/' + projectId, { headers: authHeader() });
   }
 
   updateProject(project_settings) {
     return axios.post(API_URL + 'projects/update', { project: project_settings }, { headers: authHeader() });
   }
 
-  deleteProject(project_id) {
-    return axios.post(API_URL + 'projects/delete', { id: project_id }, { headers: authHeader() });
+  deleteProject(projectId) {
+    return axios.post(API_URL + 'projects/delete', { id: projectId }, { headers: authHeader() });
   }
 
-  updateThumbnail(project_id, project_thumbnail) {
-    return axios.post(API_URL + 'projects/thumbnail/' + project_id, { data: project_thumbnail }, { headers: authHeader() }); 
+  cloneProject(projectId) {
+    return axios.post(API_URL + 'projects/clone', { id: projectId }, { headers: authHeader() });
+  }
+
+  updateThumbnail(projectId, project_thumbnail) {
+    return axios.post(API_URL + 'projects/thumbnail/' + projectId, { data: project_thumbnail }, { headers: authHeader() }); 
   }
 
   updateSettings(user) {

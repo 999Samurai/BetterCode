@@ -312,6 +312,25 @@ low(adapter).then(db => {
     let projectId = req.body.id;
     let userInfo = await user.get_user_info(req.userId);
     await _projects.deleteProject(projectId, userInfo);
+    return res.status(200).send({ auth: true, success: true });
+
+  })
+
+  app.post('/api/projects/clone', _auth.verifyJWT, async (req, res, next) => {
+
+    let userId = req.userId;
+    let projectId = req.body.id;
+
+    let userInfo = await user.get_user_info(userId);
+    let clonedProject = await _projects.get_info(projectId);
+
+    let newProjectName = "Cloned from " + clonedProject[0].project_name;
+    let clonedUserInfo = await user.get_user_info(clonedProject[0].creater_id);
+    let createdProject = await user.create_user_project(userId, newProjectName);
+
+    await _projects.cloneProject(userInfo, clonedUserInfo, clonedProject, newProjectName, createdProject);
+    return res.status(200).send({ auth: true, success: true, project: createdProject });
+    
 
   })
 

@@ -1,9 +1,6 @@
 <template>
-
     <div v-if="dataReady">
-
         <header>
-        
             <h1 style="float: left;">
                 <div class="changelog-badge">
                     <b-navbar-brand href="/">BetterCode</b-navbar-brand>
@@ -50,7 +47,7 @@
 
                 <h2 v-b-modal.modal-prevent-closing v-if="currentUser.user_id == project_info.creater_id"><b-icon icon="gear"></b-icon> Project Settings</h2>
 
-                <b-button variant="primary" size="md" v-if="currentUser.user_id != project_info.creater_id" class="mb-2" style="float: right;">
+                <b-button @click="handleClone()" variant="primary" size="md" v-if="currentUser.user_id != project_info.creater_id" class="mb-2" style="float: right;">
                     <b-icon icon="cloud-arrow-down" aria-hidden="true"></b-icon> Clone Project  
                 </b-button>
             </div>
@@ -118,7 +115,6 @@
             </multipane>
         </div>
     </div>
-
 </template>
 
 <script>
@@ -138,6 +134,7 @@
 
         data() {
             return {
+                cloned: false,
                 successful: '',
                 project_info: {},
                 fullscreen: false,
@@ -304,6 +301,16 @@
             }, 
             minimizeScreen() {
                 this.fullscreen = false;
+            },
+            handleClone() {
+                
+                if(!this.cloned){
+                    UserService.cloneProject(this.project_info.id).then(response => {
+                        this.cloned = true;
+                        this.$router.push('/pen/' + response.data.project.insertId);
+                        location.reload();
+                    });
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const fse = require('fs-extra');
 
 class Projects {
 
@@ -70,6 +71,23 @@ class Projects {
                 }
             });
         });
+    }
+
+    cloneProject(userInfo, clonedUserInfo, clonedProject, newProjectName, createdProject){
+
+        return new Promise(async (resolve, reject) => {
+
+            let clonedProjectPath = path.join(__dirname, '../../', 'projects/' + clonedUserInfo[0].username + '/' + clonedProject[0].id + '_' + clonedProject[0].project_name);
+            let createdProjectPath = path.join(__dirname, '../../', 'projects/' + userInfo[0].username + '/' + createdProject.insertId + '_' + newProjectName);
+
+            fs.mkdir(createdProjectPath, {recursive: true}, err => { if(err) { console.log(err); } });
+
+            fse.copySync(clonedProjectPath, createdProjectPath, { overwrite: true });
+
+            resolve(true);
+
+        });
+
     }
 
     code_to_file(project_creator, project_id, project_name, language, code) {

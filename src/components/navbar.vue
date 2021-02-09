@@ -60,7 +60,7 @@ export default {
     loggedin: Boolean,
     username: String,
     page: String,
-    userId: String,
+    userId: Number,
     avatar: String
   },
   methods: {
