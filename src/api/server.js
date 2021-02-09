@@ -2,27 +2,33 @@
   *   Installing dependencies
   */
 
-const express = require('express');
+const express    = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors');
-const mysql = require('mysql');
-var jwt = require('jsonwebtoken');
-require('dotenv-safe').config()
+const cors       = require('cors');
+const mysql      = require('mysql');
+const jwt        = require('jsonwebtoken');
+const multer     = require('multer');
+const low        = require('lowdb')
+const uuid       = require('node-uuid');
+const nodemailer = require('nodemailer');
 
-const low = require('lowdb')
+require('dotenv').config()
+
+var storage = multer.diskStorage({ 
+  destination: 'src/assets/images/avatars',
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + ".png");
+  }
+});
+
+const avatarUpload = multer({ storage: storage });
+
 const FileAsync = require('lowdb/adapters/FileAsync')
-
- /*
-  *  Library to generate a unique id
-  */
-
-const uuid = require('node-uuid');
 
  /*
   *  Creating Node Mailer connection
   */
 
-const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   service: 'gmail', auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
 });
@@ -59,9 +65,7 @@ const user = new User(connection, process.env.RECAPTCHA_SECRET);
 
 app.use(cors());
 app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({
-  extended: false
-}));
+app.use(bodyParser.urlencoded({extended: true}));
 
  /*
   *  API Routes
@@ -124,14 +128,12 @@ low(adapter).then(db => {
 
   app.post("/api/register", async (req, res) => {
 
-    let first_name = req.body.first_name;
-    let last_name = req.body.last_name;
     let email = req.body.email;
     let username = req.body.username;
     let password = req.body.password;
     let recaptcha_token = req.body.recaptcha;
 
-    if(first_name == "" || last_name == "" || email == "" || username == "" || password == ""){
+    if(email == "" || username == "" || password == ""){
       // Empty form
       
       return res.send({status: "empty", message: "Some values of the form are empty."});
@@ -160,7 +162,7 @@ low(adapter).then(db => {
 
     let hashed_password = await user.generate_hash(password);
 
-    connection.query("INSERT INTO users (first_name, last_name, username, email, password) VALUES (?, ?, ?, ?, ?);", [first_name, last_name, username, email, hashed_password], (err, rows) => {
+    connection.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?);", [username, email, hashed_password], (err, rows) => {
       if(err) {
         if(err) console.log(err);
         res.send({status: "fail", message: "An unexpected error occurred, try again later."})
@@ -227,7 +229,7 @@ low(adapter).then(db => {
     let user_projects = await user.get_user_projects(req.params.id);
 
     if(Object.keys(user_info).length > 0 && Object.keys(user_projects).length > 0) {
-      return res.status(200).send({success: true, projects: user_projects, user: { username: user_info[0].username, email: user_info[0].email, avatar: user_info[0].avatar }});
+      return res.status(200).send({success: true, projects: user_projects, user: { username: user_info[0].username, email: user_info[0].email, avatar: user_info[0].avatar, show_email: user_info[0].show_email, bio: user_info[0].bio}});
     } else {
       return res.status(200).send({success: false});
     }
@@ -243,6 +245,35 @@ low(adapter).then(db => {
     }
   })
 
+  app.get('/api/user/settings', _auth.verifyJWT, async (req, res, next) => {
+
+    let userSettings = await user.getUserSettings(req.userId);
+    return res.status(200).send({auth: true, user: userSettings});
+  });
+
+  app.post('/api/user/settings', _auth.verifyJWT, async (req, res, next) => {
+
+    let password = req.body.password;
+
+    let userInfo = await user.get_user_info(req.userId);
+    let verifyPassword = await user.verify_password(password, userInfo[0].password);
+
+    if(!verifyPassword){
+      return res.status(200).send({auth: true, success: false});
+    } else {
+      let username_status = await user.check_user(req.body.username);
+      if(username_status && userInfo[0].username != req.body.username) {
+        // Username is already in use.
+  
+        return res.send({error: true, message: "The username that you inserted is already in use."});
+      } else {
+        await user.updateUserSettings(req.body, userInfo[0], req.userId);
+        return res.status(200).send({auth: true, success: true, error: false});
+      }
+    }
+
+  });
+
   app.post('/api/user/create', _auth.verifyJWT, async (req, res, next) => {
 
     let project = await user.create_user_project(req.userId, req.body.name);
@@ -254,9 +285,16 @@ low(adapter).then(db => {
     }
   })
 
-  /*app.post("/api/user/avatar", _auth.verifyJWT, (req, res, next) => {
+  app.post("/api/user/avatar", [_auth.verifyJWT, avatarUpload.single('file'), async (req, res, next) => {
 
-  })*/
+    let updateAvatar = await user.updateAvatar(req.file.filename, req.userId);
+    if(updateAvatar) {
+      return res.status(200).send({auth: true, success: true, avatar: req.file.filename});
+    } else {
+      return res.status(200).send({auth: true, success: false});
+    }
+
+  }])
 
   app.post('/api/projects/info', _auth.verifyJWT, async (req, res, next) => {
 
@@ -266,6 +304,14 @@ low(adapter).then(db => {
     } else {
       return res.status(200).send({ auth: true, success: false });
     }
+
+  })
+
+  app.post('/api/projects/delete', _auth.verifyJWT, async (req, res, next) => {
+
+    let projectId = req.body.id;
+    let userInfo = await user.get_user_info(req.userId);
+    await _projects.deleteProject(projectId, userInfo);
 
   })
 

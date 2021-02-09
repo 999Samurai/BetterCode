@@ -12,7 +12,7 @@
                     id="modal-prevent-closing"
                     ref="modal" 
                     title="Update Project"
-                    @ok="handleUpdate"
+                    hide-footer
                     >
                         <form ref="form" @submit.stop.prevent="handleSubmit">
                             <b-form-group
@@ -36,6 +36,12 @@
                                 <b-form-radio value="1">Private</b-form-radio>
                             </b-form-radio-group>
                         </form>
+                        <b-button style="margin-top: 5%;" variant="danger" @click="handleDelete()">
+                            <b-icon icon="trash"></b-icon> Delete Project
+                        </b-button>
+                        <b-button style="margin-top: 5%; float: right;" variant="primary" @click="handleUpdate()">
+                            Save
+                        </b-button>
                     </b-modal>
                 </div>
             </h1>
@@ -51,65 +57,66 @@
 
         </header>
 
-        <multipane class="vertical-panes" layout="vertical" v-if="!this.fullscreen">
-            <div class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
-                <div>
-                    <h6 class="title is-6">HTML</h6>
-                    <codemirror
-                        ref="cmEditorHtml"
-                        :value="this.code.html"
-                        :options="cmOptionsHtml"
-                        @input="onCmCodeChangeHtml"
-                    />                
-                    </div>
-            </div>
-            <multipane-resizer></multipane-resizer>
-            <div class="pane" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff' }">
-                <div>
-                    <h6 class="title is-6">CSS</h6>
-                    <codemirror
-                        ref="cmEditorCss"
-                        :value="this.code.css"
-                        :options="cmOptionsCss"
-                        @input="onCmCodeChangeCss"
-                    />                       
+        <div style="height: 100%">
+            <multipane class="vertical-panes" layout="vertical" v-if="!this.fullscreen">
+                <div class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
+                    <div>
+                        <h6 class="title is-6">HTML</h6>
+                        <codemirror
+                            ref="cmEditorHtml"
+                            :value="this.code.html"
+                            :options="cmOptionsHtml"
+                            @input="onCmCodeChangeHtml"
+                        />                
+                        </div>
                 </div>
-            </div>
-        </multipane>
+                <multipane-resizer></multipane-resizer>
+                <div class="pane" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff' }">
+                    <div>
+                        <h6 class="title is-6">CSS</h6>
+                        <codemirror
+                            ref="cmEditorCss"
+                            :value="this.code.css"
+                            :options="cmOptionsCss"
+                            @input="onCmCodeChangeCss"
+                        />                       
+                    </div>
+                </div>
+            </multipane>
 
-        <multipane class="vertical-panes" layout="vertical" style="margin-top: -1px;">
-            <div v-if="!this.fullscreen" class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
-                <div>
-                    <h6 class="title is-6">Javascript</h6>
-                    <codemirror
-                        ref="cmEditorJs"
-                        :value="this.code.javascript"
-                        :options="cmOptionsJs"
-                        @input="onCmCodeChangeJs"
-                    />        
-                </div>
-            </div>
-            <multipane-resizer></multipane-resizer>
-            <div class="pane" v-if="this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff', height: '92vh' }">
-                <div>
-                    <h6 class="title is-6" style="float: left;">Result</h6>
-                    <a style="cursor: pointer;"><b-icon v-on:click="minimizeScreen()" icon="fullscreen-exit" aria-hidden="true" style="float: right;"></b-icon></a>
-                    <div ref="compile" style="top: 0; bottom: 0; left: 0; right: 0;">
-                        <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear:both; width: 100%; height: 85vh; background-color: white;"></iframe>
+            <multipane class="vertical-panes" layout="vertical" style="margin-top: -1px;">
+                <div v-if="!this.fullscreen" class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
+                    <div>
+                        <h6 class="title is-6">Javascript</h6>
+                        <codemirror
+                            ref="cmEditorJs"
+                            :value="this.code.javascript"
+                            :options="cmOptionsJs"
+                            @input="onCmCodeChangeJs"
+                        />        
                     </div>
                 </div>
-            </div>
-            <div class="pane" v-if="!this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff' }">
-                <div>
-                    <h6 class="title is-6" style="float: left;">Result</h6>
-                    <a style="cursor: pointer;"><b-icon v-on:click="setFullscreen()" icon="fullscreen" aria-hidden="true" style="float: right;"></b-icon></a>
-                    <div ref="compile" style="top: 0; bottom: 0; left: 0; right: 0;">
-                        <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear: both; width: 100%; height: 300px; background-color: white;"></iframe>
+                <multipane-resizer></multipane-resizer>
+                <div class="pane" v-if="this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff', height: '92vh' }">
+                    <div>
+                        <h6 class="title is-6" style="float: left;">Result</h6>
+                        <a style="cursor: pointer;"><b-icon v-on:click="minimizeScreen()" icon="fullscreen-exit" aria-hidden="true" style="float: right;"></b-icon></a>
+                        <div ref="compile" style="top: 0; bottom: 0; left: 0; right: 0;">
+                            <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear:both; width: 100%; height: 85vh; background-color: white;"></iframe>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </multipane>
-
+                <div class="pane" v-if="!this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff' }">
+                    <div>
+                        <h6 class="title is-6" style="float: left;">Result</h6>
+                        <a style="cursor: pointer;"><b-icon v-on:click="setFullscreen()" icon="fullscreen" aria-hidden="true" style="float: right;"></b-icon></a>
+                        <div ref="compile" style="top: 0; bottom: 0; left: 0; right: 0;">
+                            <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear: both; width: 100%; height: 300px; background-color: white;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </multipane>
+        </div>
     </div>
 
 </template>
@@ -260,17 +267,21 @@
             handleUpdate() {
 
                 UserService.updateProject(this.project_info).then(response => {
-
                     if(response.data.success == false) {
-
                         this.project_info = response.data.project;
-
                     }
-
                 });
 
+                this.$refs['modal'].hide();
             },
 
+            handleDelete() {
+              
+              UserService.deleteProject(this.project_info.id);
+              this.$router.push('/dashboard');
+
+              
+            },
             async onCmCodeChangeHtml(cm) {
 
                 this.code.html = cm;
@@ -350,7 +361,6 @@ header div button {
 
 .vertical-panes {
   width: 100vw;
-  height: 347.5px;
   border: 1px solid #2C2F34;
   margin-left: -21.5%
 }

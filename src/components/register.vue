@@ -26,27 +26,7 @@
             <div class="wrapper">
                 <form @submit.prevent="handleRegister" id="login" tabindex="500">
                     <h3>Register</h3>
-                    <div class="first_name" style="float: left; width: 50%;">
-                        <input
-                        v-model="user.first_name"
-                        v-validate="'required|min:3|max:20'"
-                        type="text"
-                        class="form-control"
-                        name="first_name"
-                        />
-                        <label>First Name</label>
-                    </div>
-                    <div class="last_name" style="float: right; width: 50%; padding-left: 5px">
-                        <input
-                        v-model="user.last_name"
-                        v-validate="'required|min:3|max:20'"
-                        type="text"
-                        class="form-control"
-                        name="last_name"
-                        />                        
-                        <label>Last Name</label>
-                    </div>
-                    <div class="mail" style="clear: both;">
+                    <div class="mail">
                         <input
                         v-model="user.email"
                         v-validate="'required|email|max:50'"

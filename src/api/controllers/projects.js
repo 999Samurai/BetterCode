@@ -1,5 +1,4 @@
 const fs = require('fs');
-const { resolve } = require('path');
 const path = require('path');
 
 class Projects {
@@ -55,6 +54,24 @@ class Projects {
         });
     }
 
+    deleteProject(id, userInfo) {
+        return new Promise(async (resolve, reject) => {
+
+            let projectInfo = await this.get_info(id);
+
+            let dir = path.join(__dirname, '../../', 'projects/' + userInfo[0].username + '/' + id + '_' + projectInfo[0].project_name);
+            fs.rmdirSync(dir, { recursive: true });
+
+            this.con.query("DELETE FROM projects WHERE id = ?", [id], function (error, results) {
+                if(!error) {
+                    return resolve(true);
+                } else {
+                    return resolve(false);
+                }
+            });
+        });
+    }
+
     code_to_file(project_creator, project_id, project_name, language, code) {
 
         // Path: ../../project_creator/project_id + "_" + project_name
@@ -63,7 +80,7 @@ class Projects {
             let project_path = path.join(__dirname, '../../', 'projects/' + project_creator + '/' + project_id + '_' + project_name);
 
             if (!fs.existsSync(project_path)){
-                fs.mkdir(project_path, {recursive: true}, err => { console.log(err); });
+                fs.mkdir(project_path, {recursive: true}, err => { if(err) { console.log(err); } });
             }
 
             fs.writeFileSync(project_path + '/' + language + '.txt', code);

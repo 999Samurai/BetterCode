@@ -2,7 +2,7 @@
 
     <div>
     
-        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar"/>
+        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar" :userId="currentUser.user_id"/>
         <navbar v-if="!currentUser" :loggedin="false"/>
 
         <h1 align="center" v-if="Object.keys(user_info).length == 0" style="color: white; margin-top: 10%">User not found.</h1>
@@ -12,7 +12,8 @@
             <vue-initials-img v-if="user_info.avatar == 'default.png'" :name="user_info.username" size="150" style="border-radius: 10px; float: left; margin-right: 1%;"/>     
             <img v-if="user_info.avatar != 'default.png'" :src="getUserImagePath(user_info.avatar)" width="178px" height="178px" alt="user-image" id="user_image" style="border-radius: 10px; float: left; margin-right: 1%;">
             <h3 style="color: white; padding-top: 1%">{{ user_info.username }}</h3>
-            <h6 style="color: gray">{{ user_info.email }}</h6>
+            <h6 style="color: gray" v-if="user_info.show_email">{{ user_info.email }}</h6>
+            <p style="color: white; padding-top: 5%">{{ user_info.bio }}</p>
 
             <div class="projects" style="clear: both; padding-top: 10px;">
         

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <navbar v-bind:loggedin="loggedIn" v-bind:username="currentUser.username" :avatar="currentUser.avatar"/>
+        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar" :userId="currentUser.user_id"/>
 
         <br><br>
 

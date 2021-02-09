@@ -2,7 +2,7 @@
     <div>
     
         
-        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar"/>
+        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar" :userId="currentUser.user_id"/>
         <navbar v-if="!currentUser" :loggedin="false"/>
 
         <div class="projects">
@@ -15,7 +15,7 @@
                         no-body
                         img-height="125px"
                         bg-variant="dark"
-                        style="width: 16rem; margin: 10px; color: white;"
+                        style="width: 15rem; margin: 10px; color: white;"
                         v-bind:img-src="getThumbImagePath(project.project_thumb)"
                         img-alt="Project Image"
                         img-top
@@ -24,7 +24,7 @@
                                 <div class="row">
                                    <div class="col-md-3">
                                         <a :href="'/user-' + project.creater_id">
-                                            <vue-initials-img v-if="project.avatar == 'default.png'" :name="project.username" size="40" style="border-radius: 10px;"/>
+                                            <vue-initials-img v-if="project.avatar == 'default.png'" :name="project.username" size="50" style="border-radius: 10px;"/>
                                             <img v-if="project.avatar != 'default.png'" width="50px" height="50px" style="border-radius: 10px;" :src="getUserImagePath(project.avatar)">
                                         </a>
                                     </div>

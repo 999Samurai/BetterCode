@@ -1,4 +1,9 @@
 {
-  "emails": [],
+  "emails": [
+    {
+      "uuid": "5ce3b05a-9afc-4130-8a36-0cbefc3342d9",
+      "email": "diogofernandes@outlook.pt"
+    }
+  ],
   "password_reset": []
 }

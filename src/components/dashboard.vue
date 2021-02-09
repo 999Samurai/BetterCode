@@ -2,7 +2,7 @@
 
     <div>
 
-        <navbar :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar"/>
+        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar" :userId="currentUser.user_id"/>
         
         <div class="container">
         
@@ -22,11 +22,12 @@
                     <b-form-group
                     label="Project Name"
                     label-for="project_name"
-                    invalid-feedback="Project name is required"
+                    invalid-feedback="Project name is required with at least 3 digits."
                     >
                     <b-form-input
                         id="project_name"
                         v-model="name"
+                        :state="nameState"
                         v-validate="'required|min:3|max:20'"
                         required
                     ></b-form-input>
@@ -80,6 +81,9 @@ export default {
     computed: {
         currentUser() {
             return this.$store.state.auth.user;
+        }, 
+        nameState() {
+            return this.name.length > 2 ? true : false
         }
     },
     components: {

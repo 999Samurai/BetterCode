@@ -1,5 +1,7 @@
 const bcrypt = require('bcrypt');
 const fetch = require('isomorphic-fetch');
+const path = require('path');
+const fs = require('fs');
 
 class User {
 
@@ -102,6 +104,38 @@ class User {
         });
     }
 
+    getUserSettings(userId) {
+        return new Promise((resolve, reject) => {
+            this.con.query('SELECT username, bio, show_email FROM users WHERE id = ?', [userId], function (error, result) {
+                if(!error) {
+                    return resolve(result[0]);
+                } else {
+                    return resolve(false);
+                }
+            });
+        });
+    }
+    
+    updateUserSettings(userSettings, oldSettings, userId) {
+
+        let oldProjectPath = path.join(__dirname, '../../', 'projects/' + oldSettings.username);
+        let newProjectPath = path.join(__dirname, '../../', 'projects/' + userSettings.username);
+
+        if (fs.existsSync(oldProjectPath)){
+            fs.renameSync(oldProjectPath, newProjectPath);
+        }
+
+        return new Promise((resolve, reject) => {
+            this.con.query('UPDATE users SET username = ?, bio = ?, show_email = ? WHERE id = ?', [userSettings.username, userSettings.bio, userSettings.show_email, userId], function (error, result) {
+                if(!error) {
+                    return resolve(true);
+                } else {
+                    return resolve(false);
+                }
+            });
+        });
+    }
+
     create_user_project(user_id, project_name) {
         return new Promise((resolve, reject) => {
             this.con.query('INSERT INTO projects (project_name, creater_id) VALUES (?, ?)', [project_name, user_id], function (error, result) {
@@ -109,6 +143,29 @@ class User {
                     return resolve(result);
                 } else {
                     return resolve(false);
+                }
+            });
+        });
+    }
+
+    updateAvatar(avatarPath, userId) {
+        return new Promise(async (resolve, reject) => {
+
+            let OldAvatar = await this.get_user_info(userId);
+            let oldAvatarPath = path.join(__dirname, '../../', 'assets/images/avatars/' + OldAvatar[0].avatar);
+
+            fs.unlink(oldAvatarPath, (err) => {
+                if (err) {
+                    console.error(err)
+                    return
+                }
+            });
+
+            this.con.query('UPDATE users SET avatar = ? WHERE id = ?', [avatarPath, userId], function (error, results) {
+                if(!error) {
+                    return resolve(true);
+                } else {
+                    return reject("Error updating the avatar field.");
                 }
             });
         });

@@ -37,8 +37,9 @@
               <vue-initials-img v-if="avatar == 'default.png'" :name="username" size="100" id="menu_image" class="rounded-circle"/>
               <img v-if="avatar != 'default.png'" :src="getImagePath(avatar)" alt="user-image" id="menu_image" class="rounded-circle">
               <p style="color: black; font-size: 15px; text-align: center; margin-bottom: 20px;">Welcome, {{ username }}!</p>
-              <b-dropdown-item href="/settings" style="text-align: center;"><b-icon icon="gear"></b-icon> Settings</b-dropdown-item>
+              <b-dropdown-item :href="'/user-' + userId" style="text-align: center;"><b-icon icon="person"></b-icon> Profile</b-dropdown-item>
               <div class="dropdown-divider"></div>
+              <b-dropdown-item href="/settings" style="text-align: center;"><b-icon icon="gear"></b-icon> Settings</b-dropdown-item>
               <b-dropdown-item href="/logout" style="text-align: center;"><b-icon icon="box-arrow-right"></b-icon> Logout</b-dropdown-item>
             </b-nav-item-dropdown>  
         </b-navbar-nav>
@@ -59,6 +60,7 @@ export default {
     loggedin: Boolean,
     username: String,
     page: String,
+    userId: String,
     avatar: String
   },
   methods: {
@@ -89,10 +91,6 @@ export default {
 
   .button {
     margin-top: 5%;
-  }
-
-  .button:hover {
-    background-color: black;
   }
 
   #user_image {

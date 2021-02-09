@@ -17,6 +17,10 @@ class UserService {
     return axios.get(API_URL + 'projects/' + page);
   }
 
+  getUserSettings() {
+    return axios.get(API_URL + 'user/settings', { headers: authHeader() });
+  }
+
   createProject(project_name) {
     return axios.post(API_URL + 'user/create', {
         name: project_name
@@ -43,8 +47,16 @@ class UserService {
     return axios.post(API_URL + 'projects/update', { project: project_settings }, { headers: authHeader() });
   }
 
+  deleteProject(project_id) {
+    return axios.post(API_URL + 'projects/delete', { id: project_id }, { headers: authHeader() });
+  }
+
   updateThumbnail(project_id, project_thumbnail) {
     return axios.post(API_URL + 'projects/thumbnail/' + project_id, { data: project_thumbnail }, { headers: authHeader() }); 
+  }
+
+  updateSettings(user) {
+    return axios.post(API_URL + 'user/settings', { username: user.username, show_email: user.show_email, bio: user.bio, password: user.password }, { headers: authHeader() });
   }
 }
 
