@@ -2,7 +2,7 @@
 
     <div>
     
-        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar" :userId="currentUser.user_id"/>
+        <navbar v-if="currentUser" :loggedin="true" :currentUser="currentUser"/>
         <navbar v-if="!currentUser" :loggedin="false"/>
 
         <h1 align="center" v-if="Object.keys(user_info).length == 0" style="color: white; margin-top: 10%">User not found.</h1>

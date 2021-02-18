@@ -30,7 +30,7 @@
                                 name="radio-sub-component"
                             >
                                 <b-form-radio value="0">Public</b-form-radio>
-                                <b-form-radio value="1">Private</b-form-radio>
+                                <b-form-radio value="1" :disabled=disabled>Private</b-form-radio>
                             </b-form-radio-group>
                         </form>
                         <b-button style="margin-top: 5%;" variant="danger" @click="handleDelete()">
@@ -56,7 +56,7 @@
 
         <div style="height: 100%">
             <multipane class="vertical-panes" layout="vertical" v-if="!this.fullscreen">
-                <div class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
+                <div class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff', height: '46.8vh' }">
                     <div>
                         <h6 class="title is-6">HTML</h6>
                         <codemirror
@@ -68,7 +68,7 @@
                         </div>
                 </div>
                 <multipane-resizer></multipane-resizer>
-                <div class="pane" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff' }">
+                <div class="pane" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff', height: '46.8vh'  }">
                     <div>
                         <h6 class="title is-6">CSS</h6>
                         <codemirror
@@ -82,7 +82,7 @@
             </multipane>
 
             <multipane class="vertical-panes" layout="vertical" style="margin-top: -1px;">
-                <div v-if="!this.fullscreen" class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff' }">
+                <div v-if="!this.fullscreen" class="pane" :style="{ minWidth: '25vw', width: '50vw', maxWidth: '75vw', background: '#1f2227', color: '#fff', height: '46.8vh' }">
                     <div>
                         <h6 class="title is-6">Javascript</h6>
                         <codemirror
@@ -94,21 +94,21 @@
                     </div>
                 </div>
                 <multipane-resizer></multipane-resizer>
-                <div class="pane" v-if="this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff', height: '92vh' }">
+                <div class="pane" v-if="this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff', height: '93.75vh' }">
                     <div>
                         <h6 class="title is-6" style="float: left;">Result</h6>
                         <a style="cursor: pointer;"><b-icon v-on:click="minimizeScreen()" icon="fullscreen-exit" aria-hidden="true" style="float: right;"></b-icon></a>
                         <div ref="compile" style="top: 0; bottom: 0; left: 0; right: 0;">
-                            <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear:both; width: 100%; height: 85vh; background-color: white;"></iframe>
+                            <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear:both; width: 100%; height: 88vh; background-color: white;"></iframe>
                         </div>
                     </div>
                 </div>
-                <div class="pane" v-if="!this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff' }">
+                <div class="pane" v-if="!this.fullscreen" :style="{ flexGrow: 1, background: '#1f2227', color: '#fff', height: '46.8vh' }">
                     <div>
                         <h6 class="title is-6" style="float: left;">Result</h6>
                         <a style="cursor: pointer;"><b-icon v-on:click="setFullscreen()" icon="fullscreen" aria-hidden="true" style="float: right;"></b-icon></a>
                         <div ref="compile" style="top: 0; bottom: 0; left: 0; right: 0;">
-                            <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear: both; width: 100%; height: 300px; background-color: white;"></iframe>
+                            <iframe :srcdoc="'<html>' + this.code.html + '</html><style>' + this.code.css + '</style><script>' + this.code.javascript + '</script>'" style="clear: both; width: 100%; height: 400px; background-color: white;"></iframe>
                         </div>
                     </div>
                 </div>
@@ -124,8 +124,8 @@
 
     import UserService from '../services/user.service';
 
+    import '../assets/theme/3024-night.css'
     import 'codemirror/lib/codemirror.css'
-    import 'codemirror/theme/3024-night.css'
     import 'codemirror/mode/htmlmixed/htmlmixed.js'
     import 'codemirror/mode/css/css.js'
     import 'codemirror/mode/javascript/javascript.js'
@@ -135,6 +135,7 @@
         data() {
             return {
                 cloned: false,
+                disabled: false,
                 successful: '',
                 project_info: {},
                 fullscreen: false,
@@ -185,19 +186,22 @@
             codemirror
         },
         async beforeMount() {
+
+
+            if(this.loggedIn && this.currentUser.planId == 0) this.disabled = true;
+
             await UserService.getProjectInfo(this.$route.params.id).then(response => {
 
                 if(response.data.success == true) {
 
                     this.project_info = response.data.project[0];
-
                     this.successful = true;
                     this.dataReady = true;
 
-                }  else if (response.data.auth == false){ // Expired or invalid token
-
-                    this.$router.push('/logout');
-
+                }  else if (response.data.auth == false){
+                    // Expired or invalid token
+                    this.$router.push('/login?required=true');
+                    
                 } else {
 
                     this.successful = false;
@@ -236,9 +240,17 @@
                 this.$refs.cmEditorJs.codemirror.setOption("readOnly", "nocursor");
             }
 
+            this.$refs.cmEditorHtml.codemirror.setSize(null, 400);
+            this.$refs.cmEditorCss.codemirror.setSize(null, 400);
+            this.$refs.cmEditorJs.codemirror.setSize(null, 400);
+
             setInterval(async () => { await this.downloadVisualReport(); }, 60000);
         },     
         computed: {
+            
+            loggedIn() {
+                return this.$store.state.auth.status.loggedIn;
+            },
             currentUser() {
                 return this.$store.state.auth.user;
             }
@@ -276,7 +288,6 @@
               
               UserService.deleteProject(this.project_info.id);
               this.$router.push('/dashboard');
-
               
             },
             async onCmCodeChangeHtml(cm) {

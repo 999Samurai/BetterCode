@@ -2,7 +2,7 @@
   
   <div>
     
-    <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar" :userId="currentUser.user_id"/>
+    <navbar v-if="currentUser" :loggedin="true" :currentUser="currentUser"/>
 
     <b-alert show dismissible variant="danger" v-if="wrongPassword" align="center">Incorrect password.</b-alert>
     <b-alert show dismissible variant="danger" v-if="usernameInUse" align="center">Username is already in use.</b-alert>
@@ -16,11 +16,14 @@
 
         <form @submit.stop.prevent>
 
-          <h4 style="color: white;">Change Username</h4> 
-          <input type="text" class="form-control" name="username" v-model="user.username">
-          <p style="font-size: 12px; color: #8b949e; min-height: 17px; margin: 4px 0 2px;">Your username may appear around BetterCode on the discover page or your user page.</p>
-        
-          <br><br>
+          <div v-if="!isGithub">
+            <h4 style="color: white;">Change Username</h4> 
+            <input type="text" class="form-control" name="username" v-model="user.username">
+            <p style="font-size: 12px; color: #8b949e; min-height: 17px; margin: 4px 0 2px;">Your username may appear around BetterCode on the discover page or your user page.</p>
+
+            <br><br>
+          
+          </div>
 
           <h4 style="color: white;">Email</h4> 
           <input type="checkbox" id="show_email" name="email" v-model="user.show_email">
@@ -35,7 +38,8 @@
 
           <br>
 
-          <button type="submit" v-b-modal.modal-prevent-closing class="btn btn-primary" style="background-color: #218434; border-color: #218434;">Update profile</button>
+          <button type="submit" v-if="!isGithub" v-b-modal.modal-prevent-closing class="btn btn-primary" style="background-color: #218434; border-color: #218434;">Update profile</button>
+          <button type="submit" v-if="isGithub" @click="handleSubmit()" class="btn btn-primary" style="background-color: #218434; border-color: #218434;">Update profile</button>
 
           <b-modal
           id="modal-prevent-closing"
@@ -43,22 +47,22 @@
           title="Confirm your password"
           @ok="handleSubmit"
           >
-              <form ref="form" @submit.stop.prevent="handleSubmit">
-                  <b-form-group
-                    label="Password"
-                    label-for="password"
-                    invalid-feedback="Password is required"
-                  >
-                    <b-form-input
-                        id="password"
-                        placeholder="Enter your password"
-                        type="password"
-                        v-model="user.password"
-                        :state="passwordState"
-                        v-validate="'required|min:3|max:50'"
-                        trim
-                    ></b-form-input>
-                  </b-form-group>
+            <form ref="form" @submit.stop.prevent="handleSubmit">
+                <b-form-group
+                  label="Password"
+                  label-for="password"
+                  invalid-feedback="Password is required"
+                >
+                  <b-form-input
+                      id="password"
+                      placeholder="Enter your password"
+                      type="password"
+                      v-model="user.password"
+                      :state="passwordState"
+                      v-validate="'required|min:3|max:50'"
+                      trim
+                  ></b-form-input>
+                </b-form-group>
               </form>
           </b-modal>
         </form> 
@@ -94,6 +98,7 @@ export default {
   data() {
       return {
         user: new user_profile('', '', '', ''),
+        isGithub: 0,
         wrongPassword: false,
         usernameInUse: false,
         success: false
@@ -126,17 +131,27 @@ export default {
       this.usernameInUse = false;
 
       UserService.updateSettings(this.user).then(response => {
-        if(response.data.success == true) { // Correct password
+        if(response.data.success == true) { 
+          // Correct password
+
           this.success = true;
 
           let userObject = JSON.parse(localStorage.getItem('user'));
           userObject.username = this.user.username;
           localStorage.setItem('user', JSON.stringify(userObject));
-          location.reload();
+          setTimeout(function() { location.reload() }, 2000);
 
-        } else if (response.data.error == true) { // Username in use.
+        } else if (response.data.error == true) { 
+          // Username in use.
+
+          let userObject = JSON.parse(localStorage.getItem('user'));
+
           this.usernameInUse = true;
-        } else { // Wrong password
+          this.user.username = userObject.username;
+
+        } else { 
+          // Wrong password
+          
           this.wrongPassword = true;
         }
       })
@@ -145,11 +160,13 @@ export default {
   beforeMount() {
     UserService.getUserSettings().then(response => {
       if(response.data.auth == true) {
-          this.user.username = response.data.user.username;
-          this.user.show_email = response.data.user.show_email;
-          this.user.bio = response.data.user.bio;
-      } else if (response.data.auth == false){ // Expired or invalid token
-          this.$router.push('/logout');
+        this.user.username = response.data.user.username;
+        this.user.show_email = response.data.user.show_email;
+        this.user.bio = response.data.user.bio;
+        this.isGithub = response.data.user.is_github;
+      } else if (response.data.auth == false){ 
+        // Expired or invalid token
+        this.$router.push('/logout');
       }
     });
   } 
@@ -160,7 +177,7 @@ export default {
 <style scoped>
 
 #avatar_button:hover {
-    filter: blur(4px);
+  filter: blur(4px);
 }
 
 #pick-avatar {
@@ -169,11 +186,11 @@ export default {
 }
 
 #avatar_button {
-    background-color: Transparent;
-    background-repeat: repeat;
-    border: none;
-    cursor: pointer;
-    overflow: hidden;        
+  background-color: Transparent;
+  background-repeat: repeat;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;        
 }
 
 </style>

@@ -92,6 +92,42 @@ class User {
         });
     }
 
+    registerGithub(username, email, avatar) {
+        return new Promise((resolve, reject) => {
+            this.con.query('INSERT INTO users(username, email, avatar, is_github, email_verified) VALUES (?, ?, ?, 1, 1)', [username, email, avatar], function (error, result) {
+                if(!error) {
+                    return resolve(result.insertId);
+                } else {
+                    return resolve(false);
+                }
+            })
+        });
+    }
+
+    checkGithub(email) {
+        return new Promise((resolve, reject) => {
+            this.con.query('SELECT COUNT(*) as total FROM users WHERE email = ? AND is_github = 1', [email], function (error, result) {
+                if(!error) {
+                    return resolve(result[0].total > 0);
+                } else {
+                    return resolve(false);
+                }
+            })
+        });
+    }
+
+    getIdGithub(email) {
+        return new Promise((resolve, reject) => {
+            this.con.query('SELECT id FROM users WHERE email = ? AND is_github = 1', [email], function (error, result) {
+                if(!error) {
+                    return resolve(result[0].id);
+                } else {
+                    return resolve(false);
+                }
+            })
+        });
+    }
+
     get_user_projects(user_id) {
         return new Promise((resolve, reject) => {
             this.con.query('SELECT * FROM projects WHERE creater_id = ?', [user_id], function (error, results) {
@@ -106,7 +142,7 @@ class User {
 
     getUserSettings(userId) {
         return new Promise((resolve, reject) => {
-            this.con.query('SELECT username, bio, show_email FROM users WHERE id = ?', [userId], function (error, result) {
+            this.con.query('SELECT username, bio, show_email, is_github FROM users WHERE id = ?', [userId], function (error, result) {
                 if(!error) {
                     return resolve(result[0]);
                 } else {
@@ -171,6 +207,40 @@ class User {
         });
     }
     
+    updateUserPlan(userId, planId, paymentId, state) {
+        return new Promise(async (resolve, reject) => {
+
+            this.con.query('INSERT INTO plans_history(user_id, plan_id, payment_id, status) VALUES (?, ?, ?, ?)', [userId, planId, paymentId, state], function (error, result) {
+                if(!error) {
+                    return resolve(result);
+                } else {
+                    return resolve(false);
+                }
+            });
+
+        });
+    }
+
+    getUserPlan(userId) {
+        return new Promise(async (resolve, reject) => {
+
+            this.con.query('SELECT * FROM plans_history WHERE user_id = ? ORDER BY id DESC LIMIT 1', [userId], function (error, result) {
+                if(!error) {
+                    try {
+                        return resolve(result[0].plan_id);
+                    } catch {
+                        return resolve(0);
+                    }
+                } else {
+                    return resolve(false);
+                }
+            });
+
+        });
+    }
+
+
+
     generate_email_text(uuid) {
             return (`<!doctype html>
             <html>
@@ -276,7 +346,7 @@ class User {
                                             <tr>
                                                 <td style="box-sizing: border-box; position: relative; font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; color: #AEAEAE; padding: 35px; text-align: center;">
                                                     <p style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; text-align: left; margin-top: 0; color: #74787E; font-size: 12px; line-height: 1.5em;">
-                                                        2020
+                                                        2020 - 2021
                                                         <a style=3D"box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; color: #3869D4;">BetterCode</a>.
                                                         All rights reserved.
                                                     </p>

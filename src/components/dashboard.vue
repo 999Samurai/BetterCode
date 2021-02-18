@@ -2,13 +2,19 @@
 
     <div>
 
-        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar" :userId="currentUser.user_id"/>
+        <navbar v-if="loggedIn" :loggedin="true" :currentUser="currentUser"/>
         
         <div class="container">
         
-            <b-button variant="primary" size="md" v-b-modal.modal-prevent-closing class="mb-2" style="float: right;">
-                <b-icon icon="plus" aria-hidden="true"></b-icon>New Project  
-            </b-button>
+            <span id="disabled-wrapper" class="d-inline-block" tabindex="0" style="float: right;">
+                <b-button variant="primary" size="md" v-b-modal.modal-prevent-closing class="mb-2" :disabled=disabled>
+                    <b-icon icon="plus" aria-hidden="true"></b-icon>New Project  
+                </b-button>
+            </span>
+
+            <b-tooltip v-if="disabled" target="disabled-wrapper" placement="left">
+                You can't create more projects, upgrade your plan.
+            </b-tooltip>
 
             <b-modal
             id="modal-prevent-closing"
@@ -46,7 +52,7 @@
                             no-body
                             img-height="125px"
                             bg-variant="dark"
-                            style="width: 15rem; margin: 10px; color: white;"
+                            style="width: 16rem; margin: 10px; color: white;"
                             v-bind:img-src="getImagePath(project.project_thumb)"
                             img-alt="Project Image"
                             img-top
@@ -73,11 +79,16 @@ export default {
     data() {
         return {
             name: '',
+            disabled: false,
             successful: false,
             projects: []
         }
     },
     computed: {
+        
+        loggedIn() {
+            return this.$store.state.auth.status.loggedIn;
+        },
         currentUser() {
             return this.$store.state.auth.user;
         }, 
@@ -99,7 +110,6 @@ export default {
             });
 
             UserService.createProject(this.name).then(response => {
-
                 if(response.data.success == true) {
 
                     this.projects.push(response.data.project[0])
@@ -110,8 +120,11 @@ export default {
                     this.successful = false;
 
                 }
-
             })
+
+            if(this.projects.length == 5 && this.currentUser.planId == 0) { this.disabled = true; }
+            else if(this.projects.length == 15 && this.currentUser.planId == 1) { this.disabled = true; }
+
         },
             
         resetModal() {
@@ -124,19 +137,23 @@ export default {
         }
 
     },
-    beforeMount() {
-        UserService.getUserProjects().then(response => {
+    async beforeMount() {
+        
+        await UserService.getUserProjects().then(response => {
 
             if(response.data.auth == true) {
 
                 this.projects = response.data.projects;
 
-            } else if (response.data.auth == false){ // Expired or invalid token
-
+            } else if (response.data.auth == false){ 
+                // Expired or invalid token
                 this.$router.push('/logout');
-
             }
         });
+
+        if(this.projects.length == 5 && this.currentUser.planId == 0) { this.disabled = true; }
+        else if(this.projects.length == 15 && this.currentUser.planId == 1) { this.disabled = true; }
+
     }
 }
 

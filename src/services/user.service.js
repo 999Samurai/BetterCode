@@ -62,6 +62,11 @@ class UserService {
   updateSettings(user) {
     return axios.post(API_URL + 'user/settings', { username: user.username, show_email: user.show_email, bio: user.bio, password: user.password }, { headers: authHeader() });
   }
+
+  updateUserPlan(planId, paymentId, state) {
+    return axios.post(API_URL + 'user/plan', { planId: planId, paymentId: paymentId, state: state }, { headers: authHeader() });
+  }
+
 }
 
 export default new UserService();

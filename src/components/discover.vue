@@ -2,7 +2,7 @@
     <div>
     
         
-        <navbar v-if="currentUser" :loggedin="true" v-bind:username="currentUser.username" :avatar="currentUser.avatar" :userId="currentUser.user_id"/>
+        <navbar v-if="currentUser" :loggedin="true" :currentUser="currentUser"/>
         <navbar v-if="!currentUser" :loggedin="false"/>
 
         <div class="projects">
@@ -39,7 +39,7 @@
                 </div>
             </div>
             <div align="center">
-                <b-button v-if="projects.length == 16 || page != 1" @click="back()" variant="primary" size="md" class="mb-2" style="margin: 10px;">
+                <b-button v-if="page > 1" @click="back()" variant="primary" size="md" class="mb-2" style="margin: 10px;">
                     <b-icon icon="arrow-left-short" aria-hidden="true"></b-icon> Back
                 </b-button>
 

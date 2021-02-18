@@ -11,6 +11,7 @@ const multer     = require('multer');
 const low        = require('lowdb')
 const uuid       = require('node-uuid');
 const nodemailer = require('nodemailer');
+const request    = require('request');   
 
 require('dotenv').config()
 
@@ -51,6 +52,8 @@ const port = 3000;
 /*
  *  Importing controllers
  */
+
+const utils = require('./utils.js');
 
 const User = require("./controllers/user.js");
 const Projects = require("./controllers/projects.js");
@@ -109,10 +112,12 @@ low(adapter).then(db => {
           let user_name = get_results.username;
           let avatar = get_results.avatar;
 
-          var token = jwt.sign({ user_id, user_email, user_name, avatar }, process.env.SECRET, {
+          let planId = await user.getUserPlan(user_id);
+
+          var token = jwt.sign({ user_id: user_id, user_email: user_email, user_name: user_name, avatar: avatar }, process.env.SECRET, {
             expiresIn: 43200 // expires in 12 hours
           });
-          return res.send({status: "success", user: { auth: token, user_id: user_id, user_email: user_email, username: user_name, avatar: avatar }});
+          return res.send({status: "success", user: { auth: token, user_id: user_id, user_email: user_email, username: user_name, avatar: avatar, planId: planId }});
         } else {
           return res.send({status: "fail", message: "Please verify your email first."});
         }
@@ -228,7 +233,7 @@ low(adapter).then(db => {
     let user_info = await user.get_user_info(req.params.id);
     let user_projects = await user.get_user_projects(req.params.id);
 
-    if(Object.keys(user_info).length > 0 && Object.keys(user_projects).length > 0) {
+    if(Object.keys(user_info).length >= 0 && Object.keys(user_projects).length >= 0) {
       return res.status(200).send({success: true, projects: user_projects, user: { username: user_info[0].username, email: user_info[0].email, avatar: user_info[0].avatar, show_email: user_info[0].show_email, bio: user_info[0].bio}});
     } else {
       return res.status(200).send({success: false});
@@ -238,7 +243,7 @@ low(adapter).then(db => {
   app.get('/api/user/projects', _auth.verifyJWT, async (req, res, next) => {
 
     let projects = await user.get_user_projects(req.userId);
-    if(Object.keys(projects).length > 0) {
+    if(Object.keys(projects).length >= 0) {
       return res.status(200).send({auth: true, projects: projects});
     } else {
       return res.status(200).send({auth: true, error: true});
@@ -253,14 +258,10 @@ low(adapter).then(db => {
 
   app.post('/api/user/settings', _auth.verifyJWT, async (req, res, next) => {
 
-    let password = req.body.password;
-
     let userInfo = await user.get_user_info(req.userId);
-    let verifyPassword = await user.verify_password(password, userInfo[0].password);
 
-    if(!verifyPassword){
-      return res.status(200).send({auth: true, success: false});
-    } else {
+    if(userInfo[0].is_github) {
+
       let username_status = await user.check_user(req.body.username);
       if(username_status && userInfo[0].username != req.body.username) {
         // Username is already in use.
@@ -270,8 +271,28 @@ low(adapter).then(db => {
         await user.updateUserSettings(req.body, userInfo[0], req.userId);
         return res.status(200).send({auth: true, success: true, error: false});
       }
-    }
+      
+    } else {
 
+      let password = req.body.password;
+
+      let verifyPassword = await user.verify_password(password, userInfo[0].password);
+
+      if(!verifyPassword){
+        return res.status(200).send({auth: true, success: false});
+      } else {
+        let username_status = await user.check_user(req.body.username);
+        if(username_status && userInfo[0].username != req.body.username) {
+          // Username is already in use.
+    
+          return res.send({error: true, message: "The username that you inserted is already in use."});
+        } else {
+          await user.updateUserSettings(req.body, userInfo[0], req.userId);
+          return res.status(200).send({auth: true, success: true, error: false});
+        }
+      }
+
+    }
   });
 
   app.post('/api/user/create', _auth.verifyJWT, async (req, res, next) => {
@@ -295,6 +316,18 @@ low(adapter).then(db => {
     }
 
   }])
+
+  app.post("/api/user/plan", _auth.verifyJWT, async (req, res, next) => {
+
+    let userId = req.userId;
+    let planId = req.body.planId;
+    let paymentId = req.body.paymentId;
+    let state = req.body.state;
+    
+    await user.updateUserPlan(userId, planId, paymentId, state);
+    return res.status(200).send({ auth: true, success: true });
+
+  })
 
   app.post('/api/projects/info', _auth.verifyJWT, async (req, res, next) => {
 
@@ -380,7 +413,7 @@ low(adapter).then(db => {
 
     }
     
-  });
+  })
 
   app.post('/api/projects/thumbnail/:id', _auth.verifyJWT, async (req, res, next) => {
 
@@ -401,6 +434,45 @@ low(adapter).then(db => {
     return res.status(200).send({ projects: projects });
 
   });
+
+  app.get('/api/github/callback', (req, res) => {
+
+    let code = req.query.code;
+
+    if(code) {
+
+      request.post({ url:'https://github.com/login/oauth/access_token', headers: { "Accept": "application/json" }, form: { client_id: process.env.GITHUB_CLIENTID, client_secret: process.env.GITHUB_SECRET, code: code }}, async function(err, response, body){ 
+
+        if(!body.includes("error")) {
+
+          let exchange = JSON.parse(body);
+          let userEmail = await utils.getGithubEmail(exchange.access_token);
+          let userUsername = await utils.getGithubUsername(exchange.access_token);
+
+          if(!await user.checkGithub(userEmail)) {
+            await user.registerGithub(userUsername, userEmail, userUsername + ".jpeg");
+            await utils.downloadGithubImage(exchange.access_token);
+          }
+
+          let userId = await user.getIdGithub(userEmail);
+          let avatar = userUsername + ".jpeg";
+
+          var token = jwt.sign({ user_id: userId, user_email: userEmail, user_name: userUsername, avatar: avatar }, process.env.SECRET, {
+            expiresIn: 43200 // expires in 12 hours
+          });
+
+          let planId = await user.getUserPlan(userId);
+
+          return res.redirect(`http://localhost:8080/github?auth=${token}&user_id=${userId}&user_email=${userEmail}&username=${userUsername}&avatar=${avatar}&planId=${planId}`);
+
+        } else {
+          return res.status(200).send({ error: true, expired_code: true });
+        }
+      });
+    } else {
+      return res.status(200).send({ error: true });
+    }
+  })
 
 }).then(() => {
   app.listen(port, () => console.log('listening on port 3000'))

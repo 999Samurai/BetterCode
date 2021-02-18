@@ -9,7 +9,7 @@ class jsonwebtoken {
         jwt.verify(token, process.env.SECRET, function(err, decoded) {
           if (err) return res.status(200).send({ auth: false, message: 'Failed to authenticate token.' });
           
-          // se tudo estiver ok, salva no request para uso posterior
+          // Se o token estiver ok, passa o user id para usar no request.
           req.userId = decoded.user_id;
           next();
         });
