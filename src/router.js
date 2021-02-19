@@ -11,6 +11,7 @@ import user_profile from './components/user-profile.vue'
 import settings from './components/settings.vue'
 import plans from './components/plans.vue'
 import github from './components/github.vue'
+import recovery from './components/recovery.vue'
 
 
 Vue.use(Router);
@@ -61,6 +62,10 @@ export const router = new Router({
     {
         path: '/github',
         component: github
+    },
+    {
+        path: '/recovery/:uuid',
+        component: recovery
     }
 ]
 });
@@ -69,10 +74,11 @@ router.beforeEach((to, from, next) => {
     const publicPages = ['/login', '/register', '/', '/discover', '/github'];
     const authRequired = !publicPages.includes(to.path);
     const userPage = !to.path.includes("user-");
+    const recoveryPage = !to.path.includes("recovery"); 
     const penPage = !to.path.includes("pen");
     const loggedIn = localStorage.getItem('user');
   
-    if (userPage && penPage && authRequired && !loggedIn) {
+    if (userPage && penPage && authRequired && recoveryPage && !loggedIn) {
       next('/');
     } else {
       next();

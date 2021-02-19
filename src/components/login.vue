@@ -7,11 +7,13 @@
         <br>
 
         <b-alert show dismissible variant="danger" v-if="this.$route.query.required" align="center">Login is required to access that page.</b-alert>
+        <b-alert show dismissible variant="success" v-if="this.$route.query.changed" align="center">Your password has been changed.</b-alert>
         <b-alert show dismissible variant="danger" v-if="errors.has('password')" align="center">Password is required</b-alert>
         <b-alert show dismissible variant="danger" v-if="errors.has('email')" align="center">Email is required</b-alert>
 
-
-        <b-alert show dismissible variant="danger" v-if="message" align="center">{{ message }}</b-alert>
+        <b-alert show dismissible variant="danger" v-if="message && loginError" align="center">{{ message }}</b-alert>
+        <b-alert show dismissible variant="success" v-if="message && status == 'success'" align="center">{{ message }}</b-alert>
+        <b-alert show dismissible variant="warning" v-if="message && status == 'fail'" align="center">{{ message }}</b-alert>
 
         <div class="veen">
             <div class="rgstr-btn splits">
@@ -45,11 +47,41 @@
                         />
                         <label>Password</label>
                     </div>
-                    <a href=""><p style="text-align: left; font-size: 14px;">Forgot the password?</p></a>
+                    <a href="#" v-b-modal.modal-forgot-password><p style="text-align: left; font-size: 14px;">Forgot the password?</p></a>
+
+                    <b-modal
+                        id="modal-forgot-password"
+                        ref="modal" 
+                        title="Recover your password"
+                        @ok="handleSubmitRecovery"
+                    >
+                        <form ref="form" @submit.stop.prevent="handleSubmitRecovery">
+                            <b-form-group
+                            label="Enter your account email"
+                            label-for="email"
+                            invalid-feedback="Enter your user account email address and we will send you a password reset link."
+                            >
+                            <b-form-input
+                                id="email"
+                                placeholder="email@test.com"
+                                v-model="email"
+                                :state="emailState"
+                                v-validate="'required|min:3|max:20'"
+                                required
+                            ></b-form-input>
+                            </b-form-group>
+                            <vue-recaptcha
+                                ref="recaptcha"
+                                @verify="onCaptchaVerified"
+                                sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad">
+                            </vue-recaptcha>
+                        </form>
+                    </b-modal>
+
                     <vue-recaptcha
-                    ref="recaptcha"
-                    @verify="onCaptchaVerified"
-                    sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad">
+                        ref="recaptcha"
+                        @verify="onCaptchaVerified"
+                        sitekey="6LfGC9gZAAAAANxOuGnCc3tWUD0dKvigm1fVyZad">
                     </vue-recaptcha>
                     <div class="submit">
                         <span v-show="loading" class="spinner-border spinner-border-sm"></span>
@@ -58,14 +90,13 @@
                     <b-button variant="outline-dark" onclick="window.location.href='https://github.com/login/oauth/authorize?scope=user:email&client_id=62598e2904fb3b2ab5ea'">                      
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
                             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
-                        </svg>   
+                        </svg>
                         Sign in with Github
                     </b-button>
                 </form>
             </div>
         </div>	
     </div>
-
 
 </template>
 
@@ -74,6 +105,7 @@
 import navbar from './navbar.vue';
 import VueRecaptcha from 'vue-recaptcha';
 import User from '../models/user_login';
+import userService from '../services/user.service';
 
 export default {
     name: "login", 
@@ -83,6 +115,8 @@ export default {
             loading: false,
             status: '',
             recaptcha_token: '',
+            email: '',
+            loginError: 0,
             message: ''
         };
     },
@@ -93,6 +127,9 @@ export default {
     computed: {
         loggedIn() {
             return this.$store.state.auth.status.loggedIn;
+        },
+        emailState() {
+            return this.email.includes("@") ? true : false
         }
     },
     created() {
@@ -102,6 +139,9 @@ export default {
     },
     methods: {
         handleLogin() {
+
+            this.loginError = 0;
+
             try {
                 this.loading = true;
                 this.$validator.validateAll().then(isValid => {
@@ -116,6 +156,7 @@ export default {
                                 this.$router.push('/dashboard');
                             } else {
                                 this.loading = false;
+                                this.loginError = 1;
                                 this.message = "Incorrect email or password.";
                                 window.grecaptcha.reset();
                             }
@@ -129,9 +170,21 @@ export default {
             } catch (err) {
                 console.log(err);
             }
+
+            window.grecaptcha.reset();
+
         },
         onCaptchaVerified: function (recaptchaToken) {
             this.user.recaptcha = recaptchaToken;
+        },
+        handleSubmitRecovery() {
+
+            this.loginError = 0;
+
+            userService.getPasswordRecovery(this.email, this.user.recaptcha).then(response => {
+                this.status = response.data.status;
+                this.message = response.data.message;
+            });
         }
     }
 }

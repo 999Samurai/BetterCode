@@ -129,7 +129,7 @@ low(adapter).then(db => {
         return res.send({status: "fail", message: "Incorrect email or password."});
       }
 
-  })
+  });
 
   app.post("/api/register", async (req, res) => {
 
@@ -203,7 +203,7 @@ low(adapter).then(db => {
         });
       }
     });
-  })
+  });
 
   app.get("/api/verification/:uuid", (req, res) => {
 
@@ -238,7 +238,7 @@ low(adapter).then(db => {
     } else {
       return res.status(200).send({success: false});
     }
-  })
+  });
 
   app.get('/api/user/projects', _auth.verifyJWT, async (req, res, next) => {
 
@@ -248,7 +248,7 @@ low(adapter).then(db => {
     } else {
       return res.status(200).send({auth: true, error: true});
     }
-  })
+  });
 
   app.get('/api/user/settings', _auth.verifyJWT, async (req, res, next) => {
 
@@ -295,6 +295,81 @@ low(adapter).then(db => {
     }
   });
 
+  app.post('/api/user/recovery', async (req, res, next) => {
+
+    let email = req.body.email;
+    let recaptcha_token = req.body.recaptcha;
+
+    let captcha_status = await user.check_captcha(recaptcha_token);
+    if(!captcha_status) {
+      // The captcha token is invalid.
+
+      return res.send({status: "fail", message: "The captcha token is invalid."});
+    }
+
+    let account = await user.getAccountByEmail(email);
+    if(account) {
+
+      let generated_uuid = uuid.v4(); 
+
+      db.get('password_reset')
+      .push({ uuid: generated_uuid, userId: account.id })
+      .last()
+      .write()
+
+      let textEmail = user.generateRecoveryText(generated_uuid);
+
+      var mailOptions = {
+        from: '"BetterCode" <bettercode.noreply@gmail.com>',
+        to: email,
+        subject: 'Recover your password',
+        html: textEmail
+      };
+     
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } 
+      });
+    }
+
+    return res.send({status: "success", message: "We have sent you the recovery link to your email."});
+
+  });
+
+  app.get('/api/user/recovery/:uuid', (req, res) => {
+
+    let uuid = req.params.uuid;
+    let get_info = db.get("password_reset").find({ uuid: uuid }).value();
+
+    if(get_info != undefined) {
+      return res.status(200).send({ success: true });
+    } else {
+      return res.status(200).send({ success: false });
+    }
+  });
+
+  app.post('/api/user/recovery/password', async (req, res) => {
+
+    let password = req.body.password;
+    let uuid = req.body.uuid;
+    let get_info = db.get("password_reset").find({ uuid: uuid }).value();
+
+    if(get_info != undefined) {
+
+      let userId = get_info.userId;
+      let hashedPassword = await user.generate_hash(password);
+
+      await user.changePassword(userId, hashedPassword);
+
+      db.get("password_reset").remove({uuid: uuid}).write();
+
+      return res.status(200).send({ success: true });
+    } else {
+      return res.status(200).send({ success: false });
+    }
+  });
+
   app.post('/api/user/create', _auth.verifyJWT, async (req, res, next) => {
 
     let project = await user.create_user_project(req.userId, req.body.name);
@@ -304,7 +379,7 @@ low(adapter).then(db => {
     } else {
       return res.status(200).send({auth: true, success: false});
     }
-  })
+  });
 
   app.post("/api/user/avatar", [_auth.verifyJWT, avatarUpload.single('file'), async (req, res, next) => {
 
@@ -315,7 +390,7 @@ low(adapter).then(db => {
       return res.status(200).send({auth: true, success: false});
     }
 
-  }])
+  }]);
 
   app.post("/api/user/plan", _auth.verifyJWT, async (req, res, next) => {
 
@@ -327,7 +402,7 @@ low(adapter).then(db => {
     await user.updateUserPlan(userId, planId, paymentId, state);
     return res.status(200).send({ auth: true, success: true });
 
-  })
+  });
 
   app.post('/api/projects/info', _auth.verifyJWT, async (req, res, next) => {
 
@@ -338,7 +413,7 @@ low(adapter).then(db => {
       return res.status(200).send({ auth: true, success: false });
     }
 
-  })
+  });
 
   app.post('/api/projects/delete', _auth.verifyJWT, async (req, res, next) => {
 
@@ -347,7 +422,7 @@ low(adapter).then(db => {
     await _projects.deleteProject(projectId, userInfo);
     return res.status(200).send({ auth: true, success: true });
 
-  })
+  });
 
   app.post('/api/projects/clone', _auth.verifyJWT, async (req, res, next) => {
 
@@ -365,7 +440,7 @@ low(adapter).then(db => {
     return res.status(200).send({ auth: true, success: true, project: createdProject });
     
 
-  })
+  });
 
   app.post('/api/projects/:language/write/:id', _auth.verifyJWT, async (req, res, next) => {
 
@@ -380,7 +455,7 @@ low(adapter).then(db => {
       return res.status(200).send({ auth: true, success: false });
     }
 
-  })
+  });
 
   app.get('/api/projects/:language/read/:id', _auth.verifyJWT, async (req, res, next) => {
 
@@ -397,7 +472,7 @@ low(adapter).then(db => {
       return res.status(200).send({ auth: true, success: false });
     }
 
-  })
+  });
   
   app.post('/api/projects/update', _auth.verifyJWT, async (req, res, next) => {
 
@@ -413,7 +488,7 @@ low(adapter).then(db => {
 
     }
     
-  })
+  });
 
   app.post('/api/projects/thumbnail/:id', _auth.verifyJWT, async (req, res, next) => {
 
@@ -426,7 +501,7 @@ low(adapter).then(db => {
 
     return res.status(200).send({ auth: true });
 
-  })
+  });
 
   app.get('/api/projects/:page', async (req, res) => {
 
@@ -472,7 +547,7 @@ low(adapter).then(db => {
     } else {
       return res.status(200).send({ error: true });
     }
-  })
+  });
 
 }).then(() => {
   app.listen(port, () => console.log('listening on port 3000'))
