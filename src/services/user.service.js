@@ -5,6 +5,18 @@ const API_URL = 'http://localhost:3000/api/';
 
 class UserService {
 
+  getPasswordRecovery(email, recaptcha) {
+    return axios.post(API_URL + 'user/recovery', { email: email, recaptcha: recaptcha });
+  }
+  
+  checkRecovery(uuid) {
+    return axios.get(API_URL + 'user/recovery/' + uuid);
+  }
+
+  changePassword(uuid, newPassword) {
+    return axios.post(API_URL + 'user/recovery/password', { password: newPassword, uuid: uuid });
+  }
+
   getPublicUserInfo(user_id) {
     return axios.get(API_URL + 'user/info/' + user_id);
   }
