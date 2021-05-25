@@ -42,6 +42,7 @@
     "vue-paypal-checkout": "^3.2.0",
     "vue-recaptcha": "^1.3.0",
     "vue-router": "^3.4.3",
+    "vue-ultimate-skeleton-cards": "^1.0.3",
     "vuex": "^3.6.0"
   },
   "devDependencies": {

@@ -167,7 +167,7 @@ low(adapter).then(db => {
 
     let hashed_password = await user.generate_hash(password);
 
-    connection.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?);", [username, email, hashed_password], (err, rows) => {
+    connection.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", [username, email, hashed_password], (err, rows) => {
       if(err) {
         if(err) console.log(err);
         res.send({status: "fail", message: "An unexpected error occurred, try again later."})

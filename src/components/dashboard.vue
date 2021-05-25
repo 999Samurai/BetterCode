@@ -40,19 +40,19 @@
                     </b-form-group>
                 </form>
             </b-modal>
-
             <div style="clear: both;"></div>
             <div class="projects">
                 <div class="row">
-                    <p align="center" v-if="projects.length == 0">You don't have any projects.</p>
+
+                    <p align="center" v-if="isLoaded && projects.length == 0">You don't have any projects.</p>
 
                     <div v-for="project in projects" v-bind:key="project.id">
                         <a :href="'/pen/' + project.id">
                             <b-card
                             no-body
-                            img-height="125px"
-                            bg-variant="dark"
-                            style="width: 16rem; margin: 10px; color: white;"
+                            img-height="150px"
+                            bg-variant="white"
+                            style="width: 16rem; margin: 10px; color: black;"
                             v-bind:img-src="getImagePath(project.project_thumb)"
                             img-alt="Project Image"
                             img-top
@@ -63,6 +63,14 @@
                             </b-card>
                         </a>
                     </div>
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 16rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 16rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 16rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 16rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 16rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 16rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 16rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 16rem; margin: 10px;" :borderRadius="10" />
                 </div>
             </div>
         </div>
@@ -81,7 +89,8 @@ export default {
             name: '',
             disabled: false,
             successful: false,
-            projects: []
+            projects: [],
+            isLoaded: false
         }
     },
     computed: {
@@ -134,16 +143,24 @@ export default {
 
         getImagePath(photo) {
             return require('../assets/images/thumbs/' + photo);
+        },
+        sleep(ms) {
+            return new Promise((resolve) => {
+                setTimeout(resolve, ms);
+            });
         }
+
 
     },
     async beforeMount() {
         
-        await UserService.getUserProjects().then(response => {
+        await UserService.getUserProjects().then(async (response) => {
 
             if(response.data.auth == true) {
 
+                await this.sleep(1450);
                 this.projects = response.data.projects;
+                this.isLoaded = true;
 
             } else if (response.data.auth == false){ 
                 // Expired or invalid token

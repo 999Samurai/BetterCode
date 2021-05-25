@@ -14,6 +14,7 @@ import {
 import VueCodemirror from 'vue-codemirror'
 import VueHtml2Canvas from 'vue-html2canvas';
 import VueInitialsImg from 'vue-initials-img';
+import SkeletonCards from 'vue-ultimate-skeleton-cards'
 
 import App from './App.vue'
 
@@ -31,6 +32,7 @@ Vue.use(IconsPlugin);
 Vue.use(VeeValidate);
 Vue.use(VueHtml2Canvas);
 Vue.use(VueCodemirror);
+Vue.use(SkeletonCards)
 Vue.use(VueInitialsImg);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 AOS.init()

@@ -20,7 +20,7 @@
                 <h3 style="color: white; padding-top: 10px;">Projects</h3>
                 <hr style="color: white; width: 100%; color: white; border-bottom: 1px solid white;">
 
-                <p align="center" style="color: white;" v-if="projects.length == 0">This user don't have created/public projects.</p>
+                <p align="center" style="color: white;" v-if="isLoaded && projects.length == 0">This user don't have created/public projects.</p>
 
                 <div class="row"> 
                     <div v-for="project in projects" v-bind:key="project.id">
@@ -28,8 +28,8 @@
                             <b-card
                             no-body
                             img-height="125px"
-                            bg-variant="dark"
-                            style="width: 15rem; margin: 10px; color: white;"
+                            bg-variant="white"
+                            style="width: 15rem; margin: 10px; color: black;"
                             v-bind:img-src="getThumbImagePath(project.project_thumb)"
                             img-alt="Project Image"
                             img-top
@@ -40,6 +40,11 @@
                             </b-card>
                         </a>
                     </div>
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 15rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 15rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 15rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 15rem; margin: 10px;" :borderRadius="10" />
+                    <SkeletonCard v-if="!isLoaded" primary="white" structure="73" style="width: 15rem; margin: 10px;" :borderRadius="10" />
                 </div>
             </div>
         </div>
@@ -56,7 +61,8 @@ export default {
     data() {
         return {
             projects: [],
-            user_info: {"not": "empty"}
+            user_info: {"not": "empty"},
+            isLoaded: false
         }
     },
     methods: {
@@ -67,6 +73,11 @@ export default {
         getThumbImagePath(photo) {
             return require('../assets/images/thumbs/' + photo);
         },
+        sleep(ms) {
+            return new Promise((resolve) => {
+                setTimeout(resolve, ms);
+            });
+        }
     },
     components: {
       navbar  
@@ -77,14 +88,18 @@ export default {
         }
     },
     beforeMount() {
-        UserService.getPublicUserInfo(this.$route.params.id).then(response => {
+        UserService.getPublicUserInfo(this.$route.params.id).then(async (response) => {
 
             if(response.data.success == true) {
-                this.projects = response.data.projects;
                 this.user_info = response.data.user;
+                await this.sleep(1450);
+                this.isLoaded = true;
+                this.projects = response.data.projects;
             } else {
-                this.projects = [];
                 this.user_info = {};
+                await this.sleep(1450);
+                this.isLoaded = true;
+                this.projects = [];
             }
         });
     }
